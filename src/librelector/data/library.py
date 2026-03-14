@@ -1,0 +1,210 @@
+"""SQLite library manager for LibreLector.
+
+Schema
+------
+books            – one row per EPUB file
+reading_progress – latest reading position per book
+bookmarks        – user-created bookmarks
+"""
+from __future__ import annotations
+
+import logging
+import sqlite3
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
+from .models import BookRecord, Bookmark, ReadingProgress
+
+logger = logging.getLogger(__name__)
+
+_SCHEMA = """
+PRAGMA journal_mode=WAL;
+
+CREATE TABLE IF NOT EXISTS books (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_path     TEXT    NOT NULL UNIQUE,
+    title         TEXT    NOT NULL,
+    author        TEXT    NOT NULL DEFAULT '',
+    language      TEXT    NOT NULL DEFAULT 'fr',
+    identifier    TEXT    NOT NULL DEFAULT '',
+    cover_path    TEXT,
+    chapter_count INTEGER NOT NULL DEFAULT 0,
+    added_at      TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS reading_progress (
+    book_id       INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,
+    chapter_order INTEGER NOT NULL DEFAULT 0,
+    sentence_index INTEGER NOT NULL DEFAULT 0,
+    char_offset   INTEGER NOT NULL DEFAULT 0,
+    audio_ms      REAL    NOT NULL DEFAULT 0.0,
+    updated_at    TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS bookmarks (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    book_id       INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    chapter_order INTEGER NOT NULL,
+    sentence_index INTEGER NOT NULL DEFAULT 0,
+    label         TEXT    NOT NULL DEFAULT '',
+    created_at    TEXT    NOT NULL
+);
+"""
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+class Library:
+    """Manages the LibreLector SQLite database."""
+
+    DEFAULT_DIR = Path.home() / ".local" / "share" / "LibreLector"
+
+    def __init__(self, db_path: Optional[str | Path] = None) -> None:
+        if db_path is None:
+            self.DEFAULT_DIR.mkdir(parents=True, exist_ok=True)
+            db_path = self.DEFAULT_DIR / "metadata.db"
+        self._db_path = Path(db_path)
+        self._conn = sqlite3.connect(str(self._db_path), check_same_thread=False)
+        self._conn.row_factory = sqlite3.Row
+        self._conn.executescript(_SCHEMA)
+        self._conn.commit()
+        logger.info("Library opened: %s", self._db_path)
+
+    def close(self) -> None:
+        self._conn.close()
+
+    # ── books ─────────────────────────────────────────────────────────────────
+
+    def add_book(self, record: BookRecord) -> BookRecord:
+        """Insert or replace a book record; return it with the assigned id."""
+        cur = self._conn.execute(
+            """INSERT INTO books
+               (file_path, title, author, language, identifier,
+                cover_path, chapter_count, added_at)
+               VALUES (?,?,?,?,?,?,?,?)
+               ON CONFLICT(file_path) DO UPDATE SET
+                   title=excluded.title,
+                   author=excluded.author,
+                   cover_path=excluded.cover_path,
+                   chapter_count=excluded.chapter_count
+               RETURNING id""",
+            (
+                record.file_path, record.title, record.author,
+                record.language, record.identifier, record.cover_path,
+                record.chapter_count, record.added_at or _now(),
+            ),
+        )
+        row = cur.fetchone()
+        self._conn.commit()
+        record.id = row["id"]
+        return record
+
+    def all_books(self) -> list[BookRecord]:
+        rows = self._conn.execute(
+            "SELECT * FROM books ORDER BY added_at DESC"
+        ).fetchall()
+        return [self._row_to_book(r) for r in rows]
+
+    def get_book(self, book_id: int) -> Optional[BookRecord]:
+        row = self._conn.execute(
+            "SELECT * FROM books WHERE id=?", (book_id,)
+        ).fetchone()
+        return self._row_to_book(row) if row else None
+
+    def get_book_by_path(self, path: str) -> Optional[BookRecord]:
+        row = self._conn.execute(
+            "SELECT * FROM books WHERE file_path=?", (path,)
+        ).fetchone()
+        return self._row_to_book(row) if row else None
+
+    def remove_book(self, book_id: int) -> None:
+        self._conn.execute("DELETE FROM books WHERE id=?", (book_id,))
+        self._conn.commit()
+
+    # ── reading progress ──────────────────────────────────────────────────────
+
+    def save_progress(self, progress: ReadingProgress) -> None:
+        self._conn.execute(
+            """INSERT INTO reading_progress
+               (book_id, chapter_order, sentence_index, char_offset, audio_ms, updated_at)
+               VALUES (?,?,?,?,?,?)
+               ON CONFLICT(book_id) DO UPDATE SET
+                   chapter_order=excluded.chapter_order,
+                   sentence_index=excluded.sentence_index,
+                   char_offset=excluded.char_offset,
+                   audio_ms=excluded.audio_ms,
+                   updated_at=excluded.updated_at""",
+            (
+                progress.book_id, progress.chapter_order,
+                progress.sentence_index, progress.char_offset,
+                progress.audio_ms, progress.updated_at or _now(),
+            ),
+        )
+        self._conn.commit()
+
+    def get_progress(self, book_id: int) -> Optional[ReadingProgress]:
+        row = self._conn.execute(
+            "SELECT * FROM reading_progress WHERE book_id=?", (book_id,)
+        ).fetchone()
+        if not row:
+            return None
+        return ReadingProgress(
+            book_id=row["book_id"],
+            chapter_order=row["chapter_order"],
+            sentence_index=row["sentence_index"],
+            char_offset=row["char_offset"],
+            audio_ms=row["audio_ms"],
+            updated_at=row["updated_at"],
+        )
+
+    # ── bookmarks ─────────────────────────────────────────────────────────────
+
+    def add_bookmark(self, bm: Bookmark) -> Bookmark:
+        cur = self._conn.execute(
+            """INSERT INTO bookmarks
+               (book_id, chapter_order, sentence_index, label, created_at)
+               VALUES (?,?,?,?,?) RETURNING id""",
+            (bm.book_id, bm.chapter_order, bm.sentence_index,
+             bm.label, bm.created_at or _now()),
+        )
+        bm.id = cur.fetchone()["id"]
+        self._conn.commit()
+        return bm
+
+    def get_bookmarks(self, book_id: int) -> list[Bookmark]:
+        rows = self._conn.execute(
+            "SELECT * FROM bookmarks WHERE book_id=? ORDER BY chapter_order, sentence_index",
+            (book_id,),
+        ).fetchall()
+        return [
+            Bookmark(
+                id=r["id"], book_id=r["book_id"],
+                chapter_order=r["chapter_order"],
+                sentence_index=r["sentence_index"],
+                label=r["label"], created_at=r["created_at"],
+            )
+            for r in rows
+        ]
+
+    def remove_bookmark(self, bookmark_id: int) -> None:
+        self._conn.execute("DELETE FROM bookmarks WHERE id=?", (bookmark_id,))
+        self._conn.commit()
+
+    # ── helpers ───────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _row_to_book(row: sqlite3.Row) -> BookRecord:
+        return BookRecord(
+            id=row["id"],
+            file_path=row["file_path"],
+            title=row["title"],
+            author=row["author"],
+            language=row["language"],
+            identifier=row["identifier"],
+            cover_path=row["cover_path"],
+            chapter_count=row["chapter_count"],
+            added_at=row["added_at"],
+        )
