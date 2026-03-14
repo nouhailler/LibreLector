@@ -157,6 +157,14 @@ class Player:
         self._emit_chapter(chapter)
         self._speak_current_chapter()
 
+    def go_to_sentence(self, idx: int) -> None:
+        """Start playback from sentence *idx* in the current chapter."""
+        if self._book is None:
+            return
+        self._engine.stop()
+        self._sentence_index = idx
+        self._speak_current_chapter()
+
     def set_speed(self, speed: float) -> None:
         self._engine.speed = speed
 

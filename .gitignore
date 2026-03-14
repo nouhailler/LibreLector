@@ -11,3 +11,39 @@ venv/
 .ruff_cache/
 *.pyc
 *.pyo
+
+# EPUB de test et couvertures générées
+*.epub
+*_cover.jpg
+*_cover.png
+
+# Venv
+venv/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Données utilisateur
+*.db
+settings.json
+pronunciation.json
+
+# EPUB de test et couvertures générées
+*.epub
+*_cover.jpg
+*_cover.png
+
+# Venv
+venv/
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Données utilisateur
+*.db
+settings.json
+pronunciation.json

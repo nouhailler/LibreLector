@@ -9,7 +9,7 @@ from typing import Optional
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk, Pango  # noqa: E402
+from gi.repository import Gio, Adw, GLib, Gtk, Pango  # noqa: E402
 
 from ..core.player import Player
 from ..data.library import Library
@@ -61,6 +61,14 @@ class MainWindow(Adw.ApplicationWindow):
         self._library_view.connect("book-selected", self._on_book_selected)
         self._library_view.connect("book-add-requested", self._on_add_book)
 
+        # Actions menu
+        for name, cb in [("open",   self._on_add_book),
+                         ("export", self._on_export),
+                         ("quit",   lambda *_: self.get_application().quit())]:
+            action = Gio.SimpleAction.new(name, None)
+            action.connect("activate", cb)
+            self.add_action(action)
+
         sidebar_page = Adw.NavigationPage(
             title="Bibliothèque",
             child=self._library_view,
@@ -75,6 +83,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._reader_view.connect("speed-changed", self._on_speed_changed)
         self._reader_view.connect("volume-changed", self._on_volume_changed)
         self._reader_view.connect("chapter-selected", self._on_chapter_jump)
+        self._reader_view.connect("sentence-selected", self._on_sentence_jump)
 
         content_page = Adw.NavigationPage(
             title="LibreLector",
@@ -135,6 +144,19 @@ class MainWindow(Adw.ApplicationWindow):
         except Exception as exc:
             logger.error("File chooser error: %s", exc)
 
+    def _on_export(self, *_) -> None:
+        player = self._get_or_create_player()
+        book = player._book if player else None
+        if not book:
+            self._show_error("Aucun livre chargé.")
+            return
+        settings = self._load_settings()
+        model = settings.get("piper_model", "")
+        output_dir = str(Path.home() / "Music" / "LibreLector" / book.title)
+        from .export_dialog import ExportDialog
+        dlg = ExportDialog(book, model, output_dir)
+        dlg.start(self)
+
     def _on_play_pause(self, _widget) -> None:
         if self._player is None:
             return
@@ -168,13 +190,17 @@ class MainWindow(Adw.ApplicationWindow):
         if self._player:
             self._player.go_to_chapter(order)
 
+    def _on_sentence_jump(self, _widget, idx: int) -> None:
+        if self._player:
+            self._player.go_to_sentence(idx)
+
     # ── player callbacks (from background thread → GTK main loop) ─────────────
 
     def _handle_sentence(self, idx: int) -> None:
         GLib.idle_add(self._reader_view.highlight_sentence, idx)
 
     def _handle_word(self, idx: int) -> None:
-        GLib.idle_add(self._reader_view.highlight_word, idx)
+        pass  # word-level highlight disabled (Piper has no real timestamps)
 
     def _handle_chapter(self, chapter: EpubChapter) -> None:
         GLib.idle_add(self._reader_view.display_chapter, chapter, 0)

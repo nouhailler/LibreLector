@@ -56,7 +56,7 @@ class SpeechDispatcherEngine(TTSEngine):
                 self._proc.wait(timeout=1)
             except Exception:
                 pass
-        if self._thread and self._thread.is_alive():
+        if self._thread and self._thread.is_alive() and self._thread != threading.current_thread():
             self._thread.join(timeout=2)
         self._set_state(TTSState.STOPPED)
 

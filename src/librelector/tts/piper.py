@@ -192,8 +192,10 @@ class PiperEngine(TTSEngine):
                     self._pause_event.wait()
                     time.sleep(0.02)
 
-            self._play_proc.wait()
-            self._proc.wait()
+            if self._play_proc:
+                self._play_proc.wait()
+            if self._proc:
+                self._proc.wait()
 
         except FileNotFoundError as exc:
             logger.error("Piper binary not found: %s", exc)

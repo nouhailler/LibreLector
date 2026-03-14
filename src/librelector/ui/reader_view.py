@@ -8,7 +8,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("WebKit", "6.0")
-from gi.repository import Adw, GLib, GObject, Gtk, Pango  # noqa: E402
+from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango  # noqa: E402
 
 from ..epub.models import EpubBook, EpubChapter
 from ..tts.base import TTSState
@@ -35,6 +35,10 @@ class ReaderView(Gtk.Box):
         "speed-changed":   (GObject.SignalFlags.RUN_FIRST, None, (float,)),
         "volume-changed":  (GObject.SignalFlags.RUN_FIRST, None, (float,)),
         "chapter-selected":(GObject.SignalFlags.RUN_FIRST, None, (int,)),
+        "export-requested": (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "open-requested":   (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "quit-requested":   (GObject.SignalFlags.RUN_FIRST, None, ()),
+        "sentence-selected": (GObject.SignalFlags.RUN_FIRST, None, (int,)),
     }
 
     def __init__(self) -> None:
@@ -50,6 +54,15 @@ class ReaderView(Gtk.Box):
     def _build(self) -> None:
         # ── Header bar ────────────────────────────────────────────────────────
         self._header = Adw.HeaderBar()
+        # Menu hamburger
+        menu = Gio.Menu()
+        menu.append("Ouvrir un EPUB…", "win.open")
+        menu.append("Exporter en MP3…", "win.export")
+        menu.append("Quitter", "win.quit")
+        btn_menu = Gtk.MenuButton(icon_name="open-menu-symbolic",
+                                  menu_model=menu,
+                                  primary=True)
+        self._header.pack_end(btn_menu)
         self._title_widget = Adw.WindowTitle(title="LibreLector", subtitle="")
         self._header.set_title_widget(self._title_widget)
         self.append(self._header)
@@ -71,6 +84,9 @@ class ReaderView(Gtk.Box):
         self._text_scroll = Gtk.ScrolledWindow(hexpand=True, vexpand=True)
         self._text_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         self._text_view = self._make_text_view()
+        gesture = Gtk.GestureClick.new()
+        gesture.connect("pressed", self._on_text_clicked)
+        self._text_view.add_controller(gesture)
         self._text_scroll.set_child(self._text_view)
         self._paned.set_end_child(self._text_scroll)
         self._paned.set_position(220)
@@ -172,6 +188,8 @@ class ReaderView(Gtk.Box):
         if sentence_idx > 0:
             self.highlight_sentence(sentence_idx)
 
+        self.select_toc_chapter(chapter.order)
+
     def highlight_sentence(self, idx: int) -> None:
         """Highlight sentence *idx* in the text view."""
         self._current_sentence = idx
@@ -231,9 +249,34 @@ class ReaderView(Gtk.Box):
             row._chapter_order = chapter.order
             self._toc_list.append(row)
 
+    def select_toc_chapter(self, order: int) -> None:
+        """Highlight the active chapter row in the TOC."""
+        row = self._toc_list.get_row_at_index(order)
+        if row:
+            self._toc_list.select_row(row)
+            # Scroll the TOC to make the active row visible
+            adj = self._toc_list.get_parent().get_vadjustment()
+            if adj:
+                alloc = row.get_allocation()
+                adj.set_value(max(0, alloc.y - 50))
+
     def _on_toc_row_activated(self, _list_box, row: Gtk.ListBoxRow) -> None:
         order = getattr(row, "_chapter_order", 0)
         self.emit("chapter-selected", order)
+
+    def _on_text_clicked(self, gesture, n_press, x, y) -> None:
+        if self._chapter is None or n_press != 2:  # double-clic
+            return
+        bx, by = self._text_view.window_to_buffer_coords(
+            Gtk.TextWindowType.WIDGET, int(x), int(y))
+        ok, it = self._text_view.get_iter_at_location(bx, by)
+        if not ok:
+            return
+        offset = it.get_offset()
+        for seg in self._chapter.sentences:
+            if seg.char_start <= offset <= seg.char_end:
+                self.emit("sentence-selected", seg.index)
+                return
 
     def _on_speed_changed(self, spin: Gtk.SpinButton) -> None:
         self.emit("speed-changed", spin.get_value())

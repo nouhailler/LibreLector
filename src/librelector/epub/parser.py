@@ -10,6 +10,9 @@ from typing import Optional
 import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
+from bs4 import XMLParsedAsHTMLWarning
+import warnings
+warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 from .models import EpubBook, EpubChapter, TextSegment
 
@@ -117,6 +120,24 @@ class EpubParser:
             chapters=chapters,
             toc=toc,
         )
+
+    def _build_toc(self, book: epub.EpubBook, chapters: list[EpubChapter]) -> list[dict]:
+        """Build a table of contents from the EPUB NCX/NAV or chapter list."""
+        toc = []
+        try:
+            for item in book.toc:
+                if hasattr(item, 'title') and hasattr(item, 'href'):
+                    toc.append({"title": item.title, "href": item.href})
+                elif isinstance(item, tuple) and len(item) == 2:
+                    section, children = item
+                    toc.append({"title": section.title, "href": section.href})
+        except Exception as exc:
+            logger.debug("TOC extraction failed: %s", exc)
+
+        if not toc:
+            toc = [{"title": ch.title, "href": ch.id} for ch in chapters]
+
+        return toc
 
     # ── private helpers ───────────────────────────────────────────────────────
 

@@ -35,7 +35,7 @@ class LibreLectorApp(Adw.Application):
             self._window = MainWindow(application=app)
         self._window.present()
 
-    def _on_open(self, app: Adw.Application, files: list, _hint: str) -> None:
+    def _on_open(self, app: Adw.Application, files: list, n_files: int, _hint: str) -> None:
         self._on_activate(app)
         if files:
             self._window.open_file(files[0].get_path())
