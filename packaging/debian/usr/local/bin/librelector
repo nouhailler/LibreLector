@@ -1,0 +1,2 @@
+#!/bin/bash
+PYTHONPATH=/usr/local/lib/librelector python3 -m librelector "$@"

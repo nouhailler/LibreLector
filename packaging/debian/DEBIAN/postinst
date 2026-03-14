@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+pip3 install ebooklib beautifulsoup4 lxml nltk pydub --break-system-packages 2>/dev/null || true
+echo "LibreLector installé. Lancez : librelector"
+echo "Pour la voix française Piper :"
+echo "  mkdir -p ~/.local/share/LibreLector/voices"
+echo "  cd ~/.local/share/LibreLector/voices"
+echo "  wget https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx"
+echo "  wget https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx.json"

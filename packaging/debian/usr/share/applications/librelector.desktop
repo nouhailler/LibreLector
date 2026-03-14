@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=LibreLector
+Comment=Lecteur EPUB avec synthèse vocale
+Exec=librelector %f
+Icon=accessories-text-editor
+Terminal=false
+Type=Application
+Categories=Office;Viewer;
+MimeType=application/epub+zip;
