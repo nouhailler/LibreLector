@@ -5,6 +5,7 @@ Schema
 books            – one row per EPUB file
 reading_progress – latest reading position per book
 bookmarks        – user-created bookmarks
+folders          – user-defined organizational folders
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from .models import BookRecord, Bookmark, ReadingProgress
+from .models import BookRecord, Bookmark, Folder, ReadingProgress
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,12 @@ CREATE TABLE IF NOT EXISTS bookmarks (
     label         TEXT    NOT NULL DEFAULT '',
     created_at    TEXT    NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS folders (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT    NOT NULL,
+    created_at TEXT    NOT NULL
+);
 """
 
 
@@ -69,9 +76,20 @@ class Library:
         self._db_path = Path(db_path)
         self._conn = sqlite3.connect(str(self._db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
+        self._conn.execute("PRAGMA foreign_keys=ON")
         self._conn.executescript(_SCHEMA)
         self._conn.commit()
+        self._apply_migrations()
         logger.info("Library opened: %s", self._db_path)
+
+    def _apply_migrations(self) -> None:
+        cols = {row[1] for row in self._conn.execute("PRAGMA table_info(books)").fetchall()}
+        if "folder_id" not in cols:
+            self._conn.execute(
+                "ALTER TABLE books ADD COLUMN folder_id INTEGER REFERENCES folders(id) ON DELETE SET NULL"
+            )
+            self._conn.commit()
+            logger.info("Migration : colonne folder_id ajoutée à books")
 
     def close(self) -> None:
         self._conn.close()
@@ -79,7 +97,6 @@ class Library:
     # ── books ─────────────────────────────────────────────────────────────────
 
     def add_book(self, record: BookRecord) -> BookRecord:
-        """Insert or replace a book record; return it with the assigned id."""
         cur = self._conn.execute(
             """INSERT INTO books
                (file_path, title, author, language, identifier,
@@ -122,6 +139,43 @@ class Library:
 
     def remove_book(self, book_id: int) -> None:
         self._conn.execute("DELETE FROM books WHERE id=?", (book_id,))
+        self._conn.commit()
+
+    def move_book_to_folder(self, book_id: int, folder_id: Optional[int]) -> None:
+        self._conn.execute(
+            "UPDATE books SET folder_id=? WHERE id=?", (folder_id, book_id)
+        )
+        self._conn.commit()
+
+    # ── folders ───────────────────────────────────────────────────────────────
+
+    def add_folder(self, name: str) -> Folder:
+        cur = self._conn.execute(
+            "INSERT INTO folders (name, created_at) VALUES (?,?) RETURNING id",
+            (name, _now()),
+        )
+        folder_id = cur.fetchone()["id"]
+        self._conn.commit()
+        return Folder(id=folder_id, name=name, created_at=_now())
+
+    def all_folders(self) -> list[Folder]:
+        rows = self._conn.execute(
+            "SELECT * FROM folders ORDER BY name COLLATE NOCASE"
+        ).fetchall()
+        return [Folder(id=r["id"], name=r["name"], created_at=r["created_at"]) for r in rows]
+
+    def rename_folder(self, folder_id: int, new_name: str) -> None:
+        self._conn.execute(
+            "UPDATE folders SET name=? WHERE id=?", (new_name, folder_id)
+        )
+        self._conn.commit()
+
+    def remove_folder(self, folder_id: int) -> None:
+        # Détacher les livres du dossier (défense si FK désactivées)
+        self._conn.execute(
+            "UPDATE books SET folder_id=NULL WHERE folder_id=?", (folder_id,)
+        )
+        self._conn.execute("DELETE FROM folders WHERE id=?", (folder_id,))
         self._conn.commit()
 
     # ── reading progress ──────────────────────────────────────────────────────
@@ -207,4 +261,5 @@ class Library:
             cover_path=row["cover_path"],
             chapter_count=row["chapter_count"],
             added_at=row["added_at"],
+            folder_id=row["folder_id"],
         )

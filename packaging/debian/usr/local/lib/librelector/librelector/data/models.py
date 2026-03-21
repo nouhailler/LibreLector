@@ -5,6 +5,13 @@ from typing import Optional
 
 
 @dataclass
+class Folder:
+    id: Optional[int]   # None avant le premier INSERT
+    name: str
+    created_at: str     # ISO-8601
+
+
+@dataclass
 class BookRecord:
     id: Optional[int]        # None before first INSERT
     file_path: str
@@ -15,6 +22,7 @@ class BookRecord:
     cover_path: Optional[str]
     chapter_count: int
     added_at: str            # ISO-8601
+    folder_id: Optional[int] = None
 
 
 @dataclass
