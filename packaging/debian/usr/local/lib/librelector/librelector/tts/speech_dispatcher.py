@@ -50,6 +50,7 @@ class SpeechDispatcherEngine(TTSEngine):
     def stop(self) -> None:
         self._stop_event.set()
         self._pause_event.set()
+        self._cancel_daemon()
         if self._proc and self._proc.poll() is None:
             try:
                 self._proc.terminate()
@@ -63,6 +64,7 @@ class SpeechDispatcherEngine(TTSEngine):
     def pause(self) -> None:
         if self.state == TTSState.PLAYING:
             self._pause_event.clear()
+            self._cancel_daemon()
             if self._proc and self._proc.poll() is None:
                 self._proc.terminate()
             self._set_state(TTSState.PAUSED)
@@ -73,6 +75,14 @@ class SpeechDispatcherEngine(TTSEngine):
             self._pause_event.set()
 
     # ── internal ─────────────────────────────────────────────────────────────
+
+    def _cancel_daemon(self) -> None:
+        """Tell the Speech Dispatcher daemon to stop playing immediately."""
+        try:
+            subprocess.run(["spd-say", "--cancel"], timeout=1,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
 
     def _run(self, text: str, start_sentence: int) -> None:
         from ..epub.parser import _split_sentences
