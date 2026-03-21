@@ -67,6 +67,9 @@ class ReaderView(Gtk.Box):
         self._header.set_title_widget(self._title_widget)
         self.append(self._header)
 
+        # ── Inner box (paned + controls) wrapped in ToastOverlay ──────────────
+        inner = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, vexpand=True)
+
         # ── Main body: TOC pane + text area ───────────────────────────────────
         self._paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL, vexpand=True)
 
@@ -91,10 +94,12 @@ class ReaderView(Gtk.Box):
         self._paned.set_end_child(self._text_scroll)
         self._paned.set_position(220)
 
-        self.append(self._paned)
+        inner.append(self._paned)
+        inner.append(self._build_controls())
 
-        # ── Player controls ───────────────────────────────────────────────────
-        self.append(self._build_controls())
+        self._toast_overlay = Adw.ToastOverlay()
+        self._toast_overlay.set_child(inner)
+        self.append(self._toast_overlay)
 
     def _make_text_view(self) -> Gtk.TextView:
         tv = Gtk.TextView(editable=False, cursor_visible=False, wrap_mode=Gtk.WrapMode.WORD_CHAR,
@@ -167,6 +172,10 @@ class ReaderView(Gtk.Box):
         return bar
 
     # ── public API ────────────────────────────────────────────────────────────
+
+    def show_toast(self, message: str, timeout: int = 4) -> None:
+        toast = Adw.Toast(title=message, timeout=timeout)
+        self._toast_overlay.add_toast(toast)
 
     def load_book(self, book: EpubBook) -> None:
         self._book = book

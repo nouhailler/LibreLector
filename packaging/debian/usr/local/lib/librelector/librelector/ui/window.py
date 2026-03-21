@@ -115,6 +115,14 @@ class MainWindow(Adw.ApplicationWindow):
         chapter = self._player.current_chapter
         if chapter:
             self._reader_view.display_chapter(chapter, sentence_idx=self._player.current_sentence_index)
+        # Afficher le moteur TTS actif
+        engine = self._player._engine
+        engine_name = type(engine).__name__
+        if "Piper" in engine_name:
+            msg = "Voix : Piper (neuronale)"
+        else:
+            msg = "Voix : Speech Dispatcher (robot) — configurez Piper dans settings.json"
+        self._reader_view.show_toast(msg)
         return False  # GLib.idle_add
 
     # ── player interaction ────────────────────────────────────────────────────
@@ -169,6 +177,10 @@ class MainWindow(Adw.ApplicationWindow):
     def _on_stop(self, _widget) -> None:
         if self._player:
             self._player.stop()
+            # Revenir au début du chapitre
+            chapter = self._player.current_chapter
+            if chapter:
+                GLib.idle_add(self._reader_view.display_chapter, chapter, 0)
 
     def _on_next_chapter(self, _widget) -> None:
         if self._player:
