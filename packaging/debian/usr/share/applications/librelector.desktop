@@ -1,9 +1,18 @@
 [Desktop Entry]
+Version=1.0
 Name=LibreLector
-Comment=Lecteur EPUB avec synthèse vocale
+Name[fr]=LibreLector
+GenericName=Lecteur EPUB
+GenericName[fr]=Lecteur EPUB
+Comment=Lecteur EPUB avec synthèse vocale neuronale offline
+Comment[fr]=Lecteur EPUB avec synthèse vocale neuronale offline
 Exec=librelector %f
-Icon=accessories-text-editor
+Icon=librelector
 Terminal=false
 Type=Application
-Categories=Office;Viewer;
+Categories=Office;Viewer;AudioVideo;
 MimeType=application/epub+zip;
+Keywords=epub;livre;lecture;audio;tts;piper;ebook;
+Keywords[fr]=epub;livre;lecture;audio;tts;piper;ebook;
+StartupNotify=true
+StartupWMClass=librelector

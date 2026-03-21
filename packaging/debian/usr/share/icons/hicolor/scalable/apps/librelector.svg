@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <!-- Fond arrondi -->
+  <rect width="96" height="96" rx="20" fill="#1c71d8"/>
+
+  <!-- Livre ouvert -->
+  <g transform="translate(10, 18)">
+    <!-- Page gauche -->
+    <path d="M38 8 L10 14 L10 62 L38 56 Z" fill="#ffffff" opacity="0.95"/>
+    <!-- Page droite -->
+    <path d="M38 8 L66 14 L66 62 L38 56 Z" fill="#e8f0fe" opacity="0.95"/>
+    <!-- Reliure centrale -->
+    <rect x="36" y="8" width="4" height="48" fill="#1c71d8" opacity="0.3"/>
+    <!-- Lignes page gauche -->
+    <line x1="16" y1="24" x2="34" y2="21" stroke="#1c71d8" stroke-width="2" opacity="0.4"/>
+    <line x1="16" y1="32" x2="34" y2="29" stroke="#1c71d8" stroke-width="2" opacity="0.4"/>
+    <line x1="16" y1="40" x2="34" y2="37" stroke="#1c71d8" stroke-width="2" opacity="0.4"/>
+    <!-- Lignes page droite -->
+    <line x1="42" y1="21" x2="60" y2="24" stroke="#1c71d8" stroke-width="2" opacity="0.4"/>
+    <line x1="42" y1="29" x2="60" y2="32" stroke="#1c71d8" stroke-width="2" opacity="0.4"/>
+    <line x1="42" y1="37" x2="60" y2="40" stroke="#1c71d8" stroke-width="2" opacity="0.4"/>
+  </g>
+
+  <!-- Ondes sonores (droite, bas) -->
+  <g transform="translate(58, 56)" fill="none" stroke="#ffffff" stroke-linecap="round">
+    <path d="M4 12 Q10 6 10 0 Q10 -6 4 -12" stroke-width="3" opacity="0.9"/>
+    <path d="M10 15 Q20 7 20 0 Q20 -7 10 -15" stroke-width="3" opacity="0.6"/>
+  </g>
+
+  <!-- Point central de l'onde -->
+  <circle cx="62" cy="56" r="3" fill="#ffffff" opacity="0.9"/>
+</svg>

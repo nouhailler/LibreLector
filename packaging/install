@@ -1,0 +1,28 @@
+# LibreLector — Fichiers installés par le paquet .deb
+#
+# Ce fichier décrit la structure d'installation du paquet librelector.
+# Il est fourni à titre documentaire.
+
+# Exécutable principal
+usr/local/bin/librelector
+
+# Code source Python (bibliothèque privée)
+usr/local/lib/librelector/librelector/          # code de l'application
+usr/local/lib/librelector/bs4/                  # beautifulsoup4
+usr/local/lib/librelector/ebooklib/             # ebooklib
+usr/local/lib/librelector/click/                # click
+usr/local/lib/librelector/pydub/                # pydub
+usr/local/lib/librelector/nltk/                 # nltk
+usr/local/lib/librelector/joblib/               # joblib
+
+# Ressources bureau
+usr/share/applications/librelector.desktop      # entrée menu applications
+usr/share/icons/hicolor/scalable/apps/librelector.svg   # icône vectorielle
+usr/share/icons/hicolor/48x48/apps/librelector.png      # icône 48×48
+usr/share/pixmaps/librelector.png               # icône fallback
+
+# Données utilisateur (créées au premier lancement, non incluses dans le paquet)
+# ~/.local/share/LibreLector/metadata.db        # bibliothèque SQLite
+# ~/.local/share/LibreLector/settings.json      # préférences
+# ~/.local/share/LibreLector/pronunciation.json # dictionnaire de prononciation
+# ~/.local/share/LibreLector/voices/            # modèles Piper (.onnx)
