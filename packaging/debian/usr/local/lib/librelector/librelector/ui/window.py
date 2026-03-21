@@ -243,8 +243,8 @@ class MainWindow(Adw.ApplicationWindow):
         if settings_path.exists():
             try:
                 return json.loads(settings_path.read_text())
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.error("settings.json invalide : %s", exc)
         return {}
 
     def _show_error(self, message: str) -> None:
