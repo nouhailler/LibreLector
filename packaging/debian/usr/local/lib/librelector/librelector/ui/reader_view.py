@@ -7,7 +7,6 @@ from typing import Optional
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-gi.require_version("WebKit", "6.0")
 from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango  # noqa: E402
 
 from ..epub.models import EpubBook, EpubChapter
@@ -17,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import WebKit for rich HTML rendering; fall back to Gtk.TextView
 try:
+    gi.require_version("WebKit", "6.0")
     from gi.repository import WebKit  # noqa: F401
     _WEBKIT_AVAILABLE = True
 except Exception:
