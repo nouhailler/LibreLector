@@ -62,9 +62,11 @@ class MainWindow(Adw.ApplicationWindow):
         self._library_view.connect("book-add-requested", self._on_add_book)
 
         # Actions menu
-        for name, cb in [("open",   self._on_add_book),
-                         ("export", self._on_export),
-                         ("quit",   lambda *_: self.get_application().quit())]:
+        for name, cb in [("open",     self._on_add_book),
+                         ("export",   self._on_export),
+                         ("settings", self._on_settings),
+                         ("help",     self._on_help),
+                         ("quit",     lambda *_: self.get_application().quit())]:
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", cb)
             self.add_action(action)
@@ -151,6 +153,31 @@ class MainWindow(Adw.ApplicationWindow):
                 self._library_view.refresh()
         except Exception as exc:
             logger.error("File chooser error: %s", exc)
+
+    def _on_settings(self, *_) -> None:
+        from .settings_dialog import SettingsDialog
+        dlg = SettingsDialog()
+        dlg.present(self)
+
+    def _on_help(self, *_) -> None:
+        dialog = Adw.MessageDialog(
+            transient_for=self,
+            heading="LibreLector — Aide rapide",
+            body=(
+                "Raccourcis et gestes essentiels :\n\n"
+                "▶ / ⏸  Lire / Pause\n"
+                "⏹  Arrêter et revenir au début du chapitre\n"
+                "⏮ ⏭  Chapitre précédent / suivant\n"
+                "Double-clic sur une phrase  →  Lire depuis cet endroit\n"
+                "Clic sur un chapitre (table des matières)  →  Aller à ce chapitre\n\n"
+                "Le moteur TTS actif s'affiche en bas de l'écran à l'ouverture d'un livre.\n"
+                "Consultez le guide complet dans docs/GUIDE_UTILISATEUR.md\n"
+                "ou sur github.com/nouhailler/LibreLector"
+            ),
+        )
+        dialog.add_response("ok", "Fermer")
+        dialog.set_default_response("ok")
+        dialog.present()
 
     def _on_export(self, *_) -> None:
         player = self._get_or_create_player()

@@ -58,6 +58,8 @@ class ReaderView(Gtk.Box):
         menu = Gio.Menu()
         menu.append("Ouvrir un EPUB…", "win.open")
         menu.append("Exporter en MP3…", "win.export")
+        menu.append("Paramètres…", "win.settings")
+        menu.append("Aide", "win.help")
         menu.append("Quitter", "win.quit")
         btn_menu = Gtk.MenuButton(icon_name="open-menu-symbolic",
                                   menu_model=menu,
