@@ -30,6 +30,9 @@ __pycache__/
 settings.json
 pronunciation.json
 
+# Paquets de distribution
+*.deb
+
 # EPUB de test et couvertures générées
 *.epub
 *_cover.jpg
