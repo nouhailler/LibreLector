@@ -12,41 +12,19 @@ venv/
 *.pyc
 *.pyo
 
-# EPUB de test et couvertures générées
-*.epub
-*_cover.jpg
-*_cover.png
-
-# Venv
-venv/
-
-# Cache Python
-__pycache__/
-*.pyc
-*.pyo
+# Dépendances front
+ui/node_modules/
+ui/dist/
 
 # Données utilisateur
 *.db
 settings.json
 pronunciation.json
+
+# Couvertures générées et EPUB de test
+*.epub
+*_cover.jpg
+*_cover.png
 
 # Paquets de distribution
 *.deb
-
-# EPUB de test et couvertures générées
-*.epub
-*_cover.jpg
-*_cover.png
-
-# Venv
-venv/
-
-# Cache Python
-__pycache__/
-*.pyc
-*.pyo
-
-# Données utilisateur
-*.db
-settings.json
-pronunciation.json

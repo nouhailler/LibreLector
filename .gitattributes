@@ -1,0 +1,17 @@
+# Dépendances Python bundlées dans le paquet .deb — ignorées par Linguist
+packaging/debian/usr/local/lib/librelector/bs4/**          linguist-vendored
+packaging/debian/usr/local/lib/librelector/lxml/**         linguist-vendored
+packaging/debian/usr/local/lib/librelector/click/**        linguist-vendored
+packaging/debian/usr/local/lib/librelector/nltk/**         linguist-vendored
+packaging/debian/usr/local/lib/librelector/joblib/**       linguist-vendored
+packaging/debian/usr/local/lib/librelector/pydub/**        linguist-vendored
+packaging/debian/usr/local/lib/librelector/tqdm/**         linguist-vendored
+packaging/debian/usr/local/lib/librelector/ebooklib/**     linguist-vendored
+packaging/debian/usr/local/lib/librelector/regex/**        linguist-vendored
+packaging/debian/usr/local/lib/librelector/soupsieve/**    linguist-vendored
+packaging/debian/usr/local/lib/librelector/bin/**          linguist-vendored
+packaging/debian/usr/local/lib/librelector/*.py            linguist-vendored
+packaging/debian/usr/local/lib/librelector/*.dist-info/**  linguist-vendored
+
+# node_modules — ignorés par Linguist
+ui/node_modules/**  linguist-vendored
