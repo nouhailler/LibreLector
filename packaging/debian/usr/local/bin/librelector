@@ -1,2 +1,32 @@
 #!/bin/bash
-PYTHONPATH=/usr/local/lib/librelector python3 -m librelector "$@"
+# LibreLector — lance le backend FastAPI et ouvre l'interface dans le navigateur
+
+PYTHONPATH=/usr/local/lib/librelector
+
+# Port du serveur
+PORT=7531
+
+# Vérifier si le port est déjà occupé (instance existante)
+if python3 -c "import socket; s=socket.socket(); s.connect(('127.0.0.1',$PORT)); s.close()" 2>/dev/null; then
+    xdg-open "http://localhost:$PORT" &
+    exit 0
+fi
+
+# Démarrer le backend en arrière-plan
+PYTHONPATH="$PYTHONPATH" python3 -m librelector.api.server &
+BACKEND_PID=$!
+
+# Attendre que le serveur soit prêt (max 15 secondes)
+for i in $(seq 1 30); do
+    if python3 -c "import socket; s=socket.socket(); s.connect(('127.0.0.1',$PORT)); s.close()" 2>/dev/null; then
+        break
+    fi
+    sleep 0.5
+done
+
+# Ouvrir l'interface dans le navigateur par défaut
+xdg-open "http://localhost:$PORT" &
+
+# Garder le backend actif tant que le script tourne
+trap "kill $BACKEND_PID 2>/dev/null; wait $BACKEND_PID 2>/dev/null" EXIT INT TERM
+wait $BACKEND_PID

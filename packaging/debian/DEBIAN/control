@@ -2,21 +2,22 @@ Package: librelector
 Version: 1.0.0
 Architecture: amd64
 Maintainer: LibreLector Contributors <contact@librelector.org>
-Depends: python3 (>= 3.11), python3-gi, python3-gi-cairo, gir1.2-gtk-4.0, gir1.2-adw-1, speech-dispatcher, alsa-utils, ffmpeg
-Recommends: piper-tts, gir1.2-webkit-6.0
-Suggests: python3-pathvalidate
+Depends: python3 (>= 3.11), python3-pip, alsa-utils, ffmpeg, xdg-utils
+Recommends: piper-tts
 Section: utils
 Priority: optional
 Homepage: https://github.com/nouhailler/LibreLector
-Description: Lecteur EPUB avec synthèse vocale neuronale offline
+Description: Lecteur EPUB audio-first avec interface React et TTS neuronal
  LibreLector est un lecteur de livres numériques EPUB conçu pour l'écoute.
+ L'interface React moderne tourne dans votre navigateur, pilotée par un
+ backend Python FastAPI local.
  .
  Fonctionnalités :
-  - Voix naturelles hors-ligne via Piper TTS (moteur neuronal)
-  - Surlignage synchronisé phrase par phrase pendant la lecture
-  - Bibliothèque organisée en dossiers thématiques
-  - Navigation par chapitres et par phrase (double-clic)
-  - Mémorisation automatique de la position de lecture
+  - Voix naturelles hors-ligne via Piper TTS (moteur neuronal ONNX)
+  - Surlignage synchronisé phrase par phrase en temps réel (WebSocket)
+  - Interface React avec bibliothèque, dossiers thématiques et TOC
+  - Navigation par clic sur n'importe quelle phrase
+  - Mémorisation automatique de la position de lecture (SQLite)
   - Export MP3 par chapitre via FFmpeg
   - Dictionnaire de prononciation personnalisable
-  - Interface GTK4 / Libadwaita
+  - Paramètres TTS depuis l'interface
