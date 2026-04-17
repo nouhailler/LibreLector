@@ -1,35 +1,36 @@
 #!/bin/bash
 set -e
 
-# Installer les dépendances Python manquantes
-pip3 install ebooklib beautifulsoup4 lxml nltk pydub pathvalidate \
+# Installer les dépendances Python
+pip3 install fastapi "uvicorn[standard]" python-multipart \
+    ebooklib beautifulsoup4 lxml nltk pydub \
     --break-system-packages --quiet 2>/dev/null || true
-
-# Mettre à jour le cache d'icônes GTK
-if command -v gtk-update-icon-cache &>/dev/null; then
-    gtk-update-icon-cache -f -t /usr/share/icons/hicolor 2>/dev/null || true
-fi
-
-# Mettre à jour la base de données MIME
-if command -v update-mime-database &>/dev/null; then
-    update-mime-database /usr/share/mime 2>/dev/null || true
-fi
 
 # Mettre à jour la base de données des applications .desktop
 if command -v update-desktop-database &>/dev/null; then
     update-desktop-database /usr/share/applications 2>/dev/null || true
 fi
 
+# Mettre à jour le cache d'icônes
+if command -v gtk-update-icon-cache &>/dev/null; then
+    gtk-update-icon-cache -f -t /usr/share/icons/hicolor 2>/dev/null || true
+fi
+
 echo ""
-echo "LibreLector v1.0.0 installé avec succès."
-echo "Lancez l'application avec : librelector"
+echo "╔══════════════════════════════════════════════════════════╗"
+echo "║          LibreLector v1.0.0 installé avec succès        ║"
+echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
-echo "Pour activer la voix naturelle Piper :"
-echo "  pip3 install piper-tts pathvalidate --break-system-packages"
+echo "Lancement : librelector"
+echo "  → démarre le serveur local et ouvre http://localhost:7531"
+echo ""
+echo "Pour la voix neuronale Piper (recommandé) :"
+echo ""
+echo "  pip3 install piper-tts --break-system-packages"
 echo "  mkdir -p ~/.local/share/LibreLector/voices"
 echo "  cd ~/.local/share/LibreLector/voices"
 echo "  wget https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx"
 echo "  wget https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx.json"
 echo ""
-echo "Puis créez ~/.local/share/LibreLector/settings.json :"
-echo '  {"tts_engine":"piper","piper_model":"/home/USER/.local/share/LibreLector/voices/fr_FR-siwis-medium.onnx","language":"fr"}'
+echo "Puis dans LibreLector : ⚙ Paramètres → sélectionner le modèle → Enregistrer"
+echo ""
