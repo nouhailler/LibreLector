@@ -18,7 +18,18 @@ logger = logging.getLogger(__name__)
 # Module-level singleton — imported by all routers via lazy import
 session: AppSession  # assigned inside lifespan before requests are served
 
-_UI_DIST = Path(__file__).resolve().parent.parent.parent.parent / "ui" / "dist"
+def _locate_ui_dist() -> Path:
+    """Search parent directories for the built React UI (works both in-source and installed)."""
+    here = Path(__file__).resolve().parent
+    for _ in range(6):
+        candidate = here / "ui" / "dist"
+        if candidate.exists():
+            return candidate
+        here = here.parent
+    # Fallback: expected installed location (/usr/local/lib/librelector/ui/dist)
+    return Path(__file__).resolve().parent.parent.parent / "ui" / "dist"
+
+_UI_DIST = _locate_ui_dist()
 
 
 @asynccontextmanager

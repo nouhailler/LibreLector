@@ -13,10 +13,21 @@ echo "==> Version : $VERSION"
 
 echo "==> Nettoyage du code source précédent..."
 rm -rf "$LIB_DIR/librelector"
+rm -rf "$LIB_DIR/ui"
 rm -f "$LIB_DIR/__editable__"*.pth
 
 echo "==> Copie du code source librelector..."
 cp -r "$ROOT_DIR/src/librelector" "$LIB_DIR/librelector"
+
+echo "==> Construction du frontend React..."
+cd "$ROOT_DIR/ui"
+npm install --silent
+npm run build
+cd "$ROOT_DIR"
+
+echo "==> Copie du frontend React..."
+mkdir -p "$LIB_DIR/ui"
+cp -r "$ROOT_DIR/ui/dist" "$LIB_DIR/ui/dist"
 
 echo "==> Vérification des permissions..."
 chmod 755 "$DEB_DIR/DEBIAN/postinst"
