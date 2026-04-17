@@ -15,6 +15,7 @@ def _get_session():
     return session
 
 
+@router.get("")
 @router.get("/")
 async def get_settings():
     """Return current settings dict."""

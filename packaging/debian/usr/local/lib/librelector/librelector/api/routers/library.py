@@ -38,6 +38,7 @@ class BookFolder(BaseModel):
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+@router.get("")
 @router.get("/")
 async def list_library():
     """Return all folders and books."""

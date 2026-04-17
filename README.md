@@ -38,30 +38,29 @@ navigation intuitive et export MP3.
 ## Installation rapide (paquet .deb)
 
 ```bash
-wget https://github.com/nouhailler/LibreLector/releases/latest/download/librelector_0.2.0_amd64.deb
-sudo dpkg -i librelector_0.2.0_amd64.deb
+wget https://github.com/nouhailler/LibreLector/releases/latest/download/librelector_2.0.0_amd64.deb
+sudo dpkg -i librelector_2.0.0_amd64.deb
 sudo apt install -f
 ```
+
+Puis ouvrir un terminal et lancer :
+
+```bash
+librelector
+```
+
+L'interface s'ouvre dans votre navigateur à l'adresse `http://localhost:7531`.
 
 Pour la voix française naturelle (Piper) :
 
 ```bash
-pip3 install piper-tts pathvalidate --break-system-packages
 mkdir -p ~/.local/share/LibreLector/voices
 cd ~/.local/share/LibreLector/voices
 wget https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx
 wget https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx.json
 ```
 
-Puis créer `~/.local/share/LibreLector/settings.json` :
-
-```json
-{
-  "tts_engine": "piper",
-  "piper_model": "/home/VOTRE_USER/.local/share/LibreLector/voices/fr_FR-siwis-medium.onnx",
-  "language": "fr"
-}
-```
+Puis configurer la voix depuis l'interface via le bouton **⚙ Paramètres**.
 
 Voir [INSTALL.md](INSTALL.md) pour les instructions complètes et [docs/GUIDE_UTILISATEUR.md](docs/GUIDE_UTILISATEUR.md) pour la documentation complète.
 
@@ -130,11 +129,10 @@ src/librelector/
 
 ## Feuille de route
 
-- **v0.1** — MVP : parsing EPUB, TTS Piper, surlignage, bibliothèque ✅
-- **v0.2** — Export MP3, navigation par clic, dossiers thématiques ✅
-- **v0.3** — Mode podcast, navigation intelligente
-- **v0.4** — Packaging Flatpak / AppImage
-- **v1.0** — Release stable
+- **v1.0** — Interface React + API FastAPI, bibliothèque, TTS Piper ✅
+- **v2.0** — Correction chargement EPUB et panneau paramètres ✅
+- **v2.1** — Mode podcast, navigation intelligente
+- **v3.0** — Packaging Flatpak / AppImage
 
 ---
 
