@@ -5,7 +5,7 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -92,10 +92,9 @@ if _UI_DIST.exists():
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def spa_fallback(full_path: str):
-        """Serve a static file if it exists, otherwise return index.html."""
-        from fastapi import HTTPException
+        # Never intercept API routes — let FastAPI return its own 404
         if full_path.startswith("api/") or full_path == "api":
-            raise HTTPException(status_code=404, detail="Not found")
+            raise HTTPException(status_code=404)
         candidate = _UI_DIST / full_path
         if candidate.exists() and candidate.is_file():
             return FileResponse(candidate)
