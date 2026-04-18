@@ -43,3 +43,17 @@ class Bookmark:
     sentence_index: int
     label: str
     created_at: str
+
+
+@dataclass
+class Note:
+    id: Optional[int]
+    book_id: int
+    chapter_order: int
+    sentence_index: int
+    char_start: int
+    char_end: int
+    highlighted_text: str
+    content: str
+    created_at: str
+    updated_at: str

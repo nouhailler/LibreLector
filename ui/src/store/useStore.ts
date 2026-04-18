@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { api } from '../api/client'
-import type { Book, Folder, ChapterMeta, ChapterContent, PlayerState, Settings } from '../types'
+import type { Book, Folder, ChapterMeta, ChapterContent, PlayerState, Settings, Note } from '../types'
 
 interface LibreLectorState {
   // Library
@@ -18,6 +18,10 @@ interface LibreLectorState {
   playerState: PlayerState
   speed: number
   volume: number
+
+  // Notes
+  notes: Note[]
+  notesOpen: boolean
 
   // UI
   settingsOpen: boolean
@@ -51,6 +55,13 @@ interface LibreLectorState {
   setSpeed: (speed: number) => Promise<void>
   setVolume: (volume: number) => Promise<void>
 
+  // Notes actions
+  loadNotes: (bookId: number) => Promise<void>
+  addNote: (data: { chapter_order: number; sentence_index: number; char_start: number; char_end: number; highlighted_text: string; content: string }) => Promise<void>
+  editNote: (id: number, content: string) => Promise<void>
+  removeNote: (id: number) => Promise<void>
+  setNotesOpen: (open: boolean) => void
+
   // UI
   setSettingsOpen: (open: boolean) => void
 
@@ -71,6 +82,8 @@ export const useStore = create<LibreLectorState>((set, get) => ({
   playerState: 'idle',
   speed: 1.0,
   volume: 1.0,
+  notes: [],
+  notesOpen: false,
   settingsOpen: false,
   isLoadingLibrary: false,
   isLoadingBook: false,
@@ -130,8 +143,10 @@ export const useStore = create<LibreLectorState>((set, get) => ({
         currentSentenceIndex: progress?.sentence_index ?? 0,
         playerState: 'idle',
         currentChapterContent: null,
+        notes: [],
       })
       await get().loadChapter(initialChapter)
+      await get().loadNotes(bookId)
     } finally {
       set({ isLoadingBook: false })
     }
@@ -200,6 +215,30 @@ export const useStore = create<LibreLectorState>((set, get) => ({
     await api.setVolume(volume)
     set({ volume })
   },
+
+  loadNotes: async (bookId) => {
+    const data = await api.getNotes(bookId)
+    set({ notes: data.notes })
+  },
+
+  addNote: async (data) => {
+    const book = get().currentBook
+    if (!book) return
+    await api.createNote({ book_id: book.id, ...data })
+    await get().loadNotes(book.id)
+  },
+
+  editNote: async (id, content) => {
+    await api.updateNote(id, content)
+    set(s => ({ notes: s.notes.map(n => n.id === id ? { ...n, content } : n) }))
+  },
+
+  removeNote: async (id) => {
+    await api.deleteNote(id)
+    set(s => ({ notes: s.notes.filter(n => n.id !== id) }))
+  },
+
+  setNotesOpen: (open) => set({ notesOpen: open }),
 
   setSettingsOpen: (open) => set({ settingsOpen: open }),
 

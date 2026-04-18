@@ -47,3 +47,16 @@ export interface Progress {
 }
 
 export type PlayerState = 'idle' | 'playing' | 'paused' | 'stopped'
+
+export interface Note {
+  id: number
+  book_id: number
+  chapter_order: number
+  sentence_index: number
+  char_start: number
+  char_end: number
+  highlighted_text: string
+  content: string
+  created_at: string
+  updated_at: string
+}

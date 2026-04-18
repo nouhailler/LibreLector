@@ -1,6 +1,7 @@
-import type { Folder, Book, ChapterMeta, ChapterContent, Progress, PlayerState, Settings } from '../types'
+import type { Folder, Book, ChapterMeta, ChapterContent, Progress, PlayerState, Settings, Note } from '../types'
 
-const BASE = 'http://localhost:7531'
+// En dev Vite proxie /api → localhost:7531 ; en prod l'URL absolue est nécessaire
+const BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) ? '' : 'http://localhost:7531'
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -51,6 +52,15 @@ export const api = {
   getSettings: () => request<Settings>('GET', '/api/settings'),
   saveSettings: (s: Settings) => request<Settings>('PUT', '/api/settings', s),
   getVoices: () => request<{ voices: { name: string; path: string }[] }>('GET', '/api/settings/voices'),
+
+  // Notes
+  getNotes: (bookId: number) => request<{ notes: Note[] }>('GET', `/api/notes/${bookId}`),
+  createNote: (data: {
+    book_id: number; chapter_order: number; sentence_index: number
+    char_start: number; char_end: number; highlighted_text: string; content: string
+  }) => request<Note>('POST', '/api/notes', data),
+  updateNote: (id: number, content: string) => request<void>('PUT', `/api/notes/${id}`, { content }),
+  deleteNote: (id: number) => request<void>('DELETE', `/api/notes/${id}`),
 
   // Health
   health: () => request<{ status: string }>('GET', '/api/health'),

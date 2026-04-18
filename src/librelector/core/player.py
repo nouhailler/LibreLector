@@ -10,7 +10,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Optional
 
-from ..epub import EpubBook, EpubChapter, EpubParser
+from ..epub import EpubBook, EpubChapter
+from ..document import load_document
 from ..tts.base import TTSEngine, TTSState
 from ..data.library import Library
 from ..data.models import BookRecord, ReadingProgress
@@ -64,10 +65,9 @@ class Player:
     # ── public API ────────────────────────────────────────────────────────────
 
     def open_book(self, epub_path: str | Path) -> EpubBook:
-        """Parse and load an EPUB; restore saved reading position."""
+        """Parse and load a document (EPUB, PDF, TXT, FB2); restore saved position."""
         epub_path = Path(epub_path)
-        parser = EpubParser()
-        self._book = parser.parse(epub_path)
+        self._book = load_document(epub_path)
 
         # Persist to library
         record = BookRecord(

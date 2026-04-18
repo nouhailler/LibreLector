@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from .models import BookRecord, Bookmark, Folder, ReadingProgress
+from .models import BookRecord, Bookmark, Folder, Note, ReadingProgress
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,19 @@ CREATE TABLE IF NOT EXISTS folders (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     name       TEXT    NOT NULL,
     created_at TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notes (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    book_id          INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+    chapter_order    INTEGER NOT NULL,
+    sentence_index   INTEGER NOT NULL DEFAULT 0,
+    char_start       INTEGER NOT NULL DEFAULT 0,
+    char_end         INTEGER NOT NULL DEFAULT 0,
+    highlighted_text TEXT    NOT NULL DEFAULT '',
+    content          TEXT    NOT NULL DEFAULT '',
+    created_at       TEXT    NOT NULL,
+    updated_at       TEXT    NOT NULL
 );
 """
 
@@ -247,7 +260,59 @@ class Library:
         self._conn.execute("DELETE FROM bookmarks WHERE id=?", (bookmark_id,))
         self._conn.commit()
 
+    # ── notes ─────────────────────────────────────────────────────────────────
+
+    def add_note(self, note: Note) -> Note:
+        now = _now()
+        cur = self._conn.execute(
+            """INSERT INTO notes
+               (book_id, chapter_order, sentence_index, char_start, char_end,
+                highlighted_text, content, created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?) RETURNING id""",
+            (
+                note.book_id, note.chapter_order, note.sentence_index,
+                note.char_start, note.char_end, note.highlighted_text,
+                note.content, note.created_at or now, note.updated_at or now,
+            ),
+        )
+        note.id = cur.fetchone()["id"]
+        self._conn.commit()
+        return note
+
+    def get_notes(self, book_id: int) -> list[Note]:
+        rows = self._conn.execute(
+            "SELECT * FROM notes WHERE book_id=? ORDER BY chapter_order, char_start",
+            (book_id,),
+        ).fetchall()
+        return [self._row_to_note(r) for r in rows]
+
+    def update_note(self, note_id: int, content: str) -> None:
+        self._conn.execute(
+            "UPDATE notes SET content=?, updated_at=? WHERE id=?",
+            (content, _now(), note_id),
+        )
+        self._conn.commit()
+
+    def remove_note(self, note_id: int) -> None:
+        self._conn.execute("DELETE FROM notes WHERE id=?", (note_id,))
+        self._conn.commit()
+
     # ── helpers ───────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _row_to_note(row: sqlite3.Row) -> Note:
+        return Note(
+            id=row["id"],
+            book_id=row["book_id"],
+            chapter_order=row["chapter_order"],
+            sentence_index=row["sentence_index"],
+            char_start=row["char_start"],
+            char_end=row["char_end"],
+            highlighted_text=row["highlighted_text"],
+            content=row["content"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
 
     @staticmethod
     def _row_to_book(row: sqlite3.Row) -> BookRecord:

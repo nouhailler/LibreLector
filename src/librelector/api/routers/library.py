@@ -48,12 +48,22 @@ async def list_library():
     return {"folders": folders, "books": books}
 
 
+_SUPPORTED_EXTENSIONS = {".epub", ".pdf", ".txt", ".fb2"}
+
+
 @router.post("/books/upload")
 async def upload_book(file: UploadFile = File(...)):
-    """Upload an EPUB file and register it in the library."""
+    """Upload a book file (EPUB, PDF, TXT, FB2) and register it in the library."""
     sess = _get_session()
-    if not file.filename or not file.filename.lower().endswith(".epub"):
-        raise HTTPException(status_code=400, detail="Seuls les fichiers EPUB sont acceptés")
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Nom de fichier manquant")
+
+    ext = Path(file.filename).suffix.lower()
+    if ext not in _SUPPORTED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Format non supporté. Formats acceptés : {', '.join(sorted(_SUPPORTED_EXTENSIONS))}",
+        )
 
     _BOOKS_DIR.mkdir(parents=True, exist_ok=True)
     dest = _BOOKS_DIR / file.filename
@@ -74,29 +84,28 @@ async def upload_book(file: UploadFile = File(...)):
     try:
         import asyncio
         if sess.player is not None:
-            book = await asyncio.to_thread(sess.player.open_book, str(dest))
+            await asyncio.to_thread(sess.player.open_book, str(dest))
             record = sess.player._book_record  # already saved by open_book
         else:
             # Parse without TTS to register the book
-            from librelector.epub import EpubParser
+            from librelector.document import load_document
             from librelector.data.models import BookRecord
             from datetime import datetime, timezone
-            parser = EpubParser()
-            epub = await asyncio.to_thread(parser.parse, dest)
+            book = await asyncio.to_thread(load_document, dest)
             record = BookRecord(
                 id=None,
                 file_path=str(dest),
-                title=epub.title,
-                author=epub.author,
-                language=epub.language,
-                identifier=epub.identifier,
-                cover_path=epub.cover_path,
-                chapter_count=epub.chapter_count,
+                title=book.title,
+                author=book.author,
+                language=book.language,
+                identifier=book.identifier,
+                cover_path=book.cover_path,
+                chapter_count=book.chapter_count,
                 added_at=datetime.now(timezone.utc).isoformat(),
             )
             record = sess.library.add_book(record)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Erreur lors du parsing EPUB : {exc}") from exc
+        raise HTTPException(status_code=500, detail=f"Erreur lors du parsing : {exc}") from exc
 
     return dataclasses.asdict(record)
 

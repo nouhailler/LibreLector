@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .session import AppSession
-from .routers import library, reader, player, settings, export
+from .routers import library, notes, reader, player, settings, export
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,7 @@ app.add_middleware(
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(library.router)
+app.include_router(notes.router)
 app.include_router(reader.router)
 app.include_router(player.router)
 app.include_router(settings.router)

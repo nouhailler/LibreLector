@@ -55,7 +55,7 @@ function HeaderActions({ onHelpOpen }: { onHelpOpen: () => void }) {
   const handleFileOpen = () => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = '.epub'
+    input.accept = '.epub,.pdf,.txt,.fb2'
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file) await uploadBook(file)
@@ -69,7 +69,7 @@ function HeaderActions({ onHelpOpen }: { onHelpOpen: () => void }) {
         onClick={handleFileOpen}
         className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
       >
-        + Ouvrir EPUB
+        + Ouvrir EPUB · TXT · PDF
       </button>
       <button
         onClick={() => setSettingsOpen(true)}
