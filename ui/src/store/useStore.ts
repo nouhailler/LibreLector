@@ -89,7 +89,7 @@ export const useStore = create<LibreLectorState>((set, get) => ({
   uploadBook: async (file) => {
     const book = await api.uploadBook(file)
     await get().loadLibrary()
-    return book
+    await get().openBook(book.id)
   },
 
   deleteBook: async (id) => {

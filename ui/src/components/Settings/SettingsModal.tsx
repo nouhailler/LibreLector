@@ -9,12 +9,15 @@ export function SettingsModal() {
   const [voices, setVoices] = useState<{ name: string; path: string }[]>([])
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
-    Promise.all([api.getSettings(), api.getVoices()]).then(([s, v]) => {
-      setSettings(s)
-      setVoices(v.voices)
-    })
+    Promise.all([api.getSettings(), api.getVoices()])
+      .then(([s, v]) => {
+        setSettings(s)
+        setVoices(v.voices)
+      })
+      .catch(() => setLoadError(true))
   }, [])
 
   const handleSave = async () => {
@@ -40,7 +43,9 @@ export function SettingsModal() {
           <button onClick={() => setSettingsOpen(false)} className="text-slate-400 hover:text-slate-200">✕</button>
         </div>
 
-        {!settings ? (
+        {loadError ? (
+          <p className="text-red-400 text-sm">Erreur de chargement des paramètres.</p>
+        ) : !settings ? (
           <p className="text-slate-400 text-sm">Chargement…</p>
         ) : (
           <>

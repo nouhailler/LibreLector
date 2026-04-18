@@ -139,3 +139,59 @@ la totalité du backend Python (epub/, tts/, core/, data/).
 - Python : black (formatter), ruff (linter), pytest (tests)
 - Commits en français, conventionnel : `feat:`, `fix:`, `perf:`, `docs:`, `chore:`
 - Pas de commentaires triviaux — uniquement les invariants non-évidents
+
+---
+
+## Session de debug en cours
+
+**Branche :** `claude/fix-librelector-localhost-XfxCQ` → PR #3 (draft)
+
+### Corrections apportées
+
+| Commit | Problème | Fichiers modifiés |
+|--------|----------|-------------------|
+| `bbc49b5` | `.deb` ne contenait pas le frontend — `{"detail":"Not Found"}` à l'ouverture | `packaging/build_deb.sh`, `src/librelector/api/app.py` |
+| `fa1400f` | Vite 5/6 incompatible avec Node.js v24 (`ERR_MODULE_NOT_FOUND`) | `ui/package.json` (Vite 8 + plugin-react 6) |
+| `7f869a6` | Cliquer "Ouvrir EPUB" ne faisait rien (uploadBook n'appelait pas openBook) | `ui/src/store/useStore.ts` |
+| `7f869a6` | Paramètres bloqués sur "Chargement…" sans message d'erreur | `ui/src/components/Settings/SettingsModal.tsx` |
+| `7f869a6` | WebSocket se reconnectait en boucle (dépendances instables) | `ui/src/hooks/useWebSocket.ts` |
+
+### Détail des corrections
+
+**`src/librelector/api/app.py`** — `_locate_ui_dist()` remonte les dossiers parents
+jusqu'à trouver `ui/dist`, compatible dev (`src/librelector/api/…` → racine) et
+installé (`/usr/local/lib/librelector/librelector/api/…` → `/usr/local/lib/librelector/ui/dist`).
+
+**`packaging/build_deb.sh`** — ajout de `npm install && npm run build` et copie de
+`ui/dist` dans `$LIB_DIR/ui/dist` avant la construction du `.deb`.
+
+**`ui/src/store/useStore.ts`** — `uploadBook()` : après `loadLibrary()`, appelle
+maintenant `await get().openBook(book.id)`.
+
+**`ui/src/components/Settings/SettingsModal.tsx`** — `Promise.all` avec `.catch()`
+et état `loadError` ; affiche "Erreur de chargement" au lieu de rester suspendu.
+
+**`ui/src/hooks/useWebSocket.ts`** — handlers déplacés dans un `ref` (`handlersRef`),
+dépendances de l'effet passées à `[]` pour éviter les reconnexions intempestives.
+
+### Problème restant à investiguer
+
+**Paramètres TTS parfois bloqués sur "Chargement…"** — les appels API retournent 200 OK
+(`GET /api/settings` et `GET /api/settings/voices`) mais `settings` reste `null`.
+Piste : ouvrir les DevTools (F12) → onglet Console pour voir si une erreur JS
+apparaît, et onglet Réseau pour vérifier que les réponses JSON sont bien parsées.
+
+### Commandes de mise à jour rapide (machine de test sans reconstruire le .deb)
+
+```bash
+cd /tmp/librelector-src
+git fetch origin claude/fix-librelector-localhost-XfxCQ
+git reset --hard FETCH_HEAD
+cd ui
+rm -rf node_modules package-lock.json
+npm install          # installe Vite 8 depuis le package.json corrigé
+npm run build
+sudo cp -r dist/* /usr/local/lib/librelector/ui/dist/
+sudo cp /tmp/librelector-src/src/librelector/api/app.py \
+        /usr/local/lib/librelector/librelector/api/app.py
+```
