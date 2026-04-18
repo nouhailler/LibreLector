@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+VERSION=$(dpkg-query -W -f='${Version}' librelector 2>/dev/null || echo "inconnu")
+
 # Installer les dépendances Python
 pip3 install fastapi "uvicorn[standard]" python-multipart \
     ebooklib beautifulsoup4 lxml nltk pydub \
@@ -18,7 +20,7 @@ fi
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════╗"
-echo "║          LibreLector v1.0.0 installé avec succès        ║"
+printf "║      LibreLector v%-6s installé avec succès       ║\n" "$VERSION"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 echo "Lancement : librelector"
