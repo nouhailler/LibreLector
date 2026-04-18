@@ -6,52 +6,100 @@ LibreLector est un lecteur EPUB open-source orienté **audio-first** pour Linux.
 Il combine la lecture neuronale hors-ligne (Piper TTS) avec un surlignage synchronisé
 phrase par phrase, une bibliothèque persistante et l'export MP3.
 
-Licence : GPL v3 · Langue principale : Python 3.11+ · UI actuelle : GTK4 / Libadwaita
+Licence : GPL v3 · Version courante : **2.0.1** · Langue principale : Python 3.11+
 
 ---
 
-## Stack technique actuelle
+## Stack technique
 
 | Couche | Technologie |
 |--------|-------------|
-| UI | GTK4 + Libadwaita (PyGObject) |
-| Logique métier | Python 3.11 |
+| Frontend | React 18 + TypeScript (Vite 8) |
+| Style | Tailwind CSS v4 |
+| État global | Zustand (`ui/src/store/useStore.ts`) |
+| Backend | FastAPI + uvicorn (Python 3.11) |
+| Communication temps réel | WebSocket (surlignage synchronisé) |
 | TTS principal | Piper (subprocess, modèles ONNX) |
 | TTS fallback | Speech Dispatcher |
 | EPUB | ebooklib + BeautifulSoup4 + lxml |
 | NLP | NLTK (tokenisation des phrases) |
 | Base de données | SQLite (WAL) via sqlite3 |
 | Export audio | pydub + FFmpeg (subprocess) |
-| Packaging | Debian .deb + setuptools |
+| Packaging | Debian .deb (build_deb.sh) |
 
 ---
 
-## Architecture des sources
+## Architecture
+
+Le backend FastAPI démarre un serveur local sur le port **7531** et sert le frontend
+React compilé (`ui/dist/`). Le frontend s'ouvre dans le navigateur par défaut.
+
+```
+┌──────────────────────────────────────────┐
+│  Frontend React (Vite + TypeScript)       │
+│  Servi statiquement par FastAPI           │
+└───────────────────┬──────────────────────┘
+                    │ HTTP REST + WebSocket (localhost:7531)
+┌───────────────────▼──────────────────────┐
+│  Backend FastAPI (Python)                 │
+│  api/routers/ : library, player,          │
+│                 reader, settings, export  │
+│  api/ws_manager.py : surlignage WS        │
+│  Réutilise epub/, tts/, core/, data/      │
+└──────────────────────────────────────────┘
+```
+
+---
+
+## Structure des sources
 
 ```
 src/librelector/
+├── api/
+│   ├── app.py               # Application FastAPI, sert ui/dist en catch-all SPA
+│   ├── server.py            # Démarrage uvicorn
+│   ├── session.py           # État global partagé (player, livre courant)
+│   ├── ws_manager.py        # Broadcast WebSocket (surlignage phrase)
+│   └── routers/
+│       ├── library.py       # CRUD bibliothèque + upload EPUB
+│       ├── player.py        # Contrôles lecture (play/pause/stop/navigation)
+│       ├── reader.py        # Segments EPUB, position
+│       ├── settings.py      # Préférences TTS, liste des voix
+│       └── export.py        # Export MP3 SSE
 ├── epub/
-│   ├── models.py             # EpubBook, EpubChapter, TextSegment
-│   └── parser.py             # ZIP → OPF → HTML → texte brut → segments
+│   ├── models.py            # EpubBook, EpubChapter, TextSegment
+│   └── parser.py            # ZIP → OPF → HTML → texte brut → segments
 ├── tts/
-│   ├── base.py               # TTSEngine abstraite + callbacks
-│   ├── piper.py              # Moteur Piper (subprocess, neural)
-│   ├── speech_dispatcher.py  # Fallback système
-│   └── factory.py            # Sélection automatique du moteur
+│   ├── base.py              # TTSEngine abstraite + callbacks
+│   ├── piper.py             # Moteur Piper (subprocess, neural)
+│   ├── speech_dispatcher.py # Fallback système
+│   └── factory.py           # Sélection automatique du moteur
 ├── core/
-│   ├── player.py             # Orchestrateur principal (play/pause/stop/navigation)
-│   ├── exporter.py           # Export MP3 via FFmpeg
-│   └── pronunciation.py      # Dictionnaire JSON de prononciation
+│   ├── player.py            # Orchestrateur principal (play/pause/stop/navigation)
+│   ├── exporter.py          # Export MP3 via FFmpeg
+│   └── pronunciation.py     # Dictionnaire JSON de prononciation
 ├── data/
-│   ├── library.py            # CRUD SQLite (livres, dossiers, progression, marque-pages)
-│   └── models.py             # BookRecord, Folder, ReadingProgress, Bookmark
-└── ui/                       # ← À remplacer par React
-    ├── application.py
-    ├── window.py
-    ├── library_view.py
-    ├── reader_view.py
-    ├── export_dialog.py
-    └── settings_dialog.py
+│   ├── library.py           # CRUD SQLite (livres, dossiers, progression, marque-pages)
+│   └── models.py            # BookRecord, Folder, ReadingProgress, Bookmark
+└── ui/                      # Ancien code GTK4 — conservé mais non utilisé
+
+ui/                          # Frontend React
+├── src/
+│   ├── App.tsx
+│   ├── api/                 # Clients HTTP (fetch vers localhost:7531)
+│   ├── components/
+│   │   ├── Library/         # Bibliothèque, dossiers, upload
+│   │   ├── Reader/          # Affichage EPUB, surlignage
+│   │   ├── Player/          # Contrôles lecture
+│   │   ├── Settings/        # Modal paramètres TTS
+│   │   ├── Export/          # Modal export MP3
+│   │   └── Help/
+│   ├── hooks/
+│   │   └── useWebSocket.ts  # Connexion WS, handlers dans un ref (pas de reconnexion)
+│   ├── store/
+│   │   └── useStore.ts      # État global Zustand
+│   └── types.ts
+└── dist/                    # Frontend compilé — embarqué dans le .deb
 ```
 
 ---
@@ -68,130 +116,38 @@ src/librelector/
 
 ---
 
-## Fonctionnalités clés
+## Fonctionnalités
 
 - Ouverture EPUB et parsing en segments (phrases)
-- Lecture TTS avec surlignage synchronisé phrase par phrase
+- Lecture TTS avec surlignage synchronisé phrase par phrase (WebSocket)
 - Démarrage de lecture au clic sur une phrase
 - Navigation par chapitres (TOC)
 - Bibliothèque avec dossiers thématiques (SQLite)
 - Mémorisation automatique de la position de lecture
 - Contrôles : play/pause/stop, vitesse, volume, chapitre suivant/précédent
-- Export MP3 par chapitre via FFmpeg
+- Export MP3 par chapitre via FFmpeg (SSE)
 - Dictionnaire de prononciation personnalisable
+- Paramètres TTS depuis l'interface
 
 ---
 
-## Migration React en cours
+## Packaging Debian
 
-### Objectif
-Remplacer l'interface GTK4 par une interface **React** tout en conservant
-la totalité du backend Python (epub/, tts/, core/, data/).
+`packaging/build_deb.sh` :
+1. Lit la version depuis `packaging/debian/DEBIAN/control`
+2. Compile le frontend React (`npm run build`)
+3. Copie `ui/dist/` dans le `.deb`
+4. Construit `librelector_<VERSION>_amd64.deb`
 
-### Architecture cible
-
-```
-┌─────────────────────────────────────────────────┐
-│  Frontend React (Vite + TypeScript)              │
-│  Tauri shell → accès système natif               │
-└────────────────────┬────────────────────────────┘
-                     │ HTTP/WebSocket (localhost)
-┌────────────────────▼────────────────────────────┐
-│  Backend FastAPI (Python)                        │
-│  Réutilise epub/, tts/, core/, data/ intacts     │
-│  Processus sidecar géré par Tauri                │
-└─────────────────────────────────────────────────┘
-```
-
-### Pile cible
-
-| Rôle | Choix |
-|------|-------|
-| Shell desktop | **Tauri v2** (Rust, ~5 Mo vs 200 Mo Electron) |
-| Frontend | **React 18 + TypeScript** |
-| Build frontend | **Vite** |
-| Style | **Tailwind CSS v4** |
-| État global | **Zustand** |
-| API backend | **FastAPI + uvicorn** (Python, sidecar Tauri) |
-| Communication temps réel | **WebSocket** (surlignage synchronisé, progression TTS) |
-| Upload fichiers | API REST multipart |
-
-### Phases — TOUTES COMPLÉTÉES ✅
-
-1. **Backend FastAPI** (`src/librelector/api/`) — wrapper REST/WS autour de core/, epub/, data/, tts/
-2. **Shell Tauri v2** (`src-tauri/`) — démarre Python, attend port 7531, affiche la fenêtre
-3. **Frontend React** (`ui/`) — LibraryPanel, ReaderPanel, PlayerControls, SettingsModal, ExportModal
-4. **Intégration** — surlignage WebSocket, upload EPUB, export MP3 SSE, retry initial
-5. **Packaging** (`build.sh`, `src-tauri/tauri.conf.json`) — bundle Tauri → .deb uniquement
-
-### Décisions d'architecture importantes
-
-- **Le backend Python reste intact** — aucune réécriture de epub/, tts/, core/, data/
-- **WebSocket obligatoire** pour le surlignage synchronisé (événements phrase-courante)
-- **Tauri sidecar** démarre/arrête le serveur FastAPI automatiquement
-- **Fichiers EPUB stockés localement** — l'API reçoit le chemin ou un upload multipart
-- **SQLite partagé** entre backend FastAPI et éventuel accès Tauri direct
+`packaging/debian/DEBIAN/postinst` :
+- Installe les dépendances Python via pip3
+- Lit la version via `dpkg-query` et l'affiche dynamiquement dans la bannière
 
 ---
 
-## Conventions de code
+## Conventions
 
 - Python : black (formatter), ruff (linter), pytest (tests)
 - Commits en français, conventionnel : `feat:`, `fix:`, `perf:`, `docs:`, `chore:`
 - Pas de commentaires triviaux — uniquement les invariants non-évidents
-
----
-
-## Session de debug en cours
-
-**Branche :** `claude/fix-librelector-localhost-XfxCQ` → PR #3 (draft)
-
-### Corrections apportées
-
-| Commit | Problème | Fichiers modifiés |
-|--------|----------|-------------------|
-| `bbc49b5` | `.deb` ne contenait pas le frontend — `{"detail":"Not Found"}` à l'ouverture | `packaging/build_deb.sh`, `src/librelector/api/app.py` |
-| `fa1400f` | Vite 5/6 incompatible avec Node.js v24 (`ERR_MODULE_NOT_FOUND`) | `ui/package.json` (Vite 8 + plugin-react 6) |
-| `7f869a6` | Cliquer "Ouvrir EPUB" ne faisait rien (uploadBook n'appelait pas openBook) | `ui/src/store/useStore.ts` |
-| `7f869a6` | Paramètres bloqués sur "Chargement…" sans message d'erreur | `ui/src/components/Settings/SettingsModal.tsx` |
-| `7f869a6` | WebSocket se reconnectait en boucle (dépendances instables) | `ui/src/hooks/useWebSocket.ts` |
-
-### Détail des corrections
-
-**`src/librelector/api/app.py`** — `_locate_ui_dist()` remonte les dossiers parents
-jusqu'à trouver `ui/dist`, compatible dev (`src/librelector/api/…` → racine) et
-installé (`/usr/local/lib/librelector/librelector/api/…` → `/usr/local/lib/librelector/ui/dist`).
-
-**`packaging/build_deb.sh`** — ajout de `npm install && npm run build` et copie de
-`ui/dist` dans `$LIB_DIR/ui/dist` avant la construction du `.deb`.
-
-**`ui/src/store/useStore.ts`** — `uploadBook()` : après `loadLibrary()`, appelle
-maintenant `await get().openBook(book.id)`.
-
-**`ui/src/components/Settings/SettingsModal.tsx`** — `Promise.all` avec `.catch()`
-et état `loadError` ; affiche "Erreur de chargement" au lieu de rester suspendu.
-
-**`ui/src/hooks/useWebSocket.ts`** — handlers déplacés dans un `ref` (`handlersRef`),
-dépendances de l'effet passées à `[]` pour éviter les reconnexions intempestives.
-
-### Problème restant à investiguer
-
-**Paramètres TTS parfois bloqués sur "Chargement…"** — les appels API retournent 200 OK
-(`GET /api/settings` et `GET /api/settings/voices`) mais `settings` reste `null`.
-Piste : ouvrir les DevTools (F12) → onglet Console pour voir si une erreur JS
-apparaît, et onglet Réseau pour vérifier que les réponses JSON sont bien parsées.
-
-### Commandes de mise à jour rapide (machine de test sans reconstruire le .deb)
-
-```bash
-cd /tmp/librelector-src
-git fetch origin claude/fix-librelector-localhost-XfxCQ
-git reset --hard FETCH_HEAD
-cd ui
-rm -rf node_modules package-lock.json
-npm install          # installe Vite 8 depuis le package.json corrigé
-npm run build
-sudo cp -r dist/* /usr/local/lib/librelector/ui/dist/
-sudo cp /tmp/librelector-src/src/librelector/api/app.py \
-        /usr/local/lib/librelector/librelector/api/app.py
-```
+- Le catch-all SPA dans `app.py` ne doit **pas** intercepter les routes `/api/*`
