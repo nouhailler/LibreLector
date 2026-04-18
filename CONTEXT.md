@@ -7,7 +7,7 @@ Il combine la lecture neuronale hors-ligne (Piper TTS) avec un surlignage synchr
 phrase par phrase, une bibliothèque persistante, l'export MP3, des annotations utilisateur
 et la prise en charge de multiples formats de documents.
 
-Licence : GPL v3 · Version courante : **2.1.0** · Langue principale : Python 3.11+
+Licence : GPL v3 · Version courante : **2.0.1** · Langue principale : Python 3.11+
 
 ---
 
@@ -75,7 +75,7 @@ src/librelector/
 │       ├── reader.py        # Segments, position
 │       ├── settings.py      # Préférences TTS, liste des voix
 │       └── export.py        # Export MP3 SSE
-├── document/                # Abstraction multi-formats (nouveau)
+├── document/                # Abstraction multi-formats
 │   ├── base.py              # Classe abstraite DocumentParser → EpubBook
 │   ├── epub_doc.py          # Wrapper EpubParser existant
 │   ├── pdf_doc.py           # PyMuPDF : chapitres depuis TOC ou par groupes de pages
@@ -181,13 +181,11 @@ ui/                          # Frontend React
 ## Démarrage en développement
 
 ```bash
-# Terminal 1 — backend
-cd /home/swinux/Documents/AppGithub/Librelector
+# Terminal 1 — backend (depuis la racine du dépôt)
 PYTHONPATH=src python3 -m librelector.api.server
 
 # Terminal 2 — frontend (proxy Vite → port 7531)
-cd /home/swinux/Documents/AppGithub/Librelector/ui
-npm run dev
+cd ui && npm run dev
 # → http://localhost:5173
 ```
 
