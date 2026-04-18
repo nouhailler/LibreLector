@@ -1,5 +1,5 @@
 Package: librelector
-Version: 1.0.0
+Version: 2.0.1
 Architecture: amd64
 Maintainer: LibreLector Contributors <contact@librelector.org>
 Depends: python3 (>= 3.11), python3-pip, alsa-utils, ffmpeg, xdg-utils
