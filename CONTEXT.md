@@ -7,7 +7,7 @@ Il combine la lecture neuronale hors-ligne (Piper TTS) avec un surlignage synchr
 phrase par phrase, une bibliothèque persistante, l'export MP3, des annotations utilisateur
 et la prise en charge de multiples formats de documents.
 
-Licence : GPL v3 · Version courante : **2.0.1** · Langue principale : Python 3.11+
+Licence : GPL v3 · Version courante : **2.1.0** · Langue principale : Python 3.11+
 
 ---
 
@@ -16,14 +16,14 @@ Licence : GPL v3 · Version courante : **2.0.1** · Langue principale : Python 3
 | Couche | Technologie |
 |--------|-------------|
 | Frontend | React 18 + TypeScript (Vite 8) |
-| Style | Tailwind CSS v4 |
+| Style | Tailwind CSS v3 |
 | État global | Zustand (`ui/src/store/useStore.ts`) |
-| Backend | FastAPI + uvicorn (Python 3.11) |
+| Backend | FastAPI + uvicorn (Python 3.11+) |
 | Communication temps réel | WebSocket (surlignage synchronisé) |
 | TTS principal | Piper (subprocess, modèles ONNX) |
 | TTS fallback | Speech Dispatcher |
 | EPUB | ebooklib + BeautifulSoup4 + lxml |
-| PDF | PyMuPDF (fitz) — `pip install PyMuPDF` |
+| PDF | PyMuPDF (fitz) |
 | FB2 / TXT | stdlib Python (xml.etree, pathlib) |
 | NLP | NLTK (tokenisation des phrases) |
 | Base de données | SQLite (WAL) via sqlite3 |
@@ -50,7 +50,7 @@ vers le port 7531 (voir `ui/vite.config.ts`).
 │  Backend FastAPI (Python)                 │
 │  api/routers/ : library, player,          │
 │                 reader, settings,         │
-│                 export, notes             │
+│                 export, notes, bookmarks  │
 │  api/ws_manager.py : surlignage WS        │
 │  Réutilise document/, epub/, tts/,        │
 │             core/, data/                  │
@@ -70,7 +70,8 @@ src/librelector/
 │   ├── ws_manager.py        # Broadcast WebSocket (surlignage phrase)
 │   └── routers/
 │       ├── library.py       # CRUD bibliothèque + upload (EPUB/PDF/TXT/FB2)
-│       ├── notes.py         # CRUD annotations utilisateur
+│       ├── notes.py         # CRUD annotations (notes + surlignages, champ type)
+│       ├── bookmarks.py     # CRUD marque-pages (/api/bookmarks)
 │       ├── player.py        # Contrôles lecture (play/pause/stop/navigation)
 │       ├── reader.py        # Segments, position
 │       ├── settings.py      # Préférences TTS, liste des voix
@@ -103,25 +104,24 @@ ui/                          # Frontend React
 ├── src/
 │   ├── App.tsx              # Layout principal, bouton upload (EPUB·TXT·PDF·FB2)
 │   ├── api/client.ts        # Clients HTTP (fetch vers /api/*)
-│   ├── types.ts             # Interfaces TypeScript (Book, Note, Sentence…)
+│   ├── types.ts             # Interfaces TypeScript (Book, Note, Bookmark, Sentence…)
 │   ├── components/
 │   │   ├── Library/         # Bibliothèque, dossiers, upload
 │   │   ├── Reader/
-│   │   │   ├── ReaderPanel.tsx    # Conteneur lecteur + bouton Notes
-│   │   │   ├── ChapterText.tsx    # Affichage phrases, sélection → bouton note flottant
+│   │   │   ├── ReaderPanel.tsx    # Conteneur lecteur + boutons Notes / Marque-page / MP3
+│   │   │   ├── ChapterText.tsx    # Affichage phrases, sélection → menu flottant (Surligner/Note)
 │   │   │   └── TableOfContents.tsx
 │   │   ├── Notes/
-│   │   │   ├── NotesPanel.tsx     # Panneau latéral : liste des notes, navigation, édition
-│   │   │   └── NoteDialog.tsx     # Dialog création de note (texte surligné + saisie)
+│   │   │   ├── NotesPanel.tsx     # Panneau unifié : notes (📝), surlignages (🖊), marque-pages (🔖)
+│   │   │   └── NoteDialog.tsx     # Dialog création de note annotée
 │   │   ├── Player/          # Contrôles lecture
 │   │   ├── Settings/        # Modal paramètres TTS
 │   │   ├── Export/          # Modal export MP3
 │   │   └── Help/
 │   ├── hooks/
-│   │   └── useWebSocket.ts  # Connexion WS, handlers dans un ref (pas de reconnexion)
-│   ├── store/
-│   │   └── useStore.ts      # État global Zustand (notes, notesOpen inclus)
-│   └── types.ts
+│   │   └── useWebSocket.ts  # Connexion WS, handlers dans un ref
+│   └── store/
+│       └── useStore.ts      # État global Zustand
 └── dist/                    # Frontend compilé — embarqué dans le .deb
 ```
 
@@ -144,12 +144,15 @@ ui/                          # Frontend React
 | `books` | Métadonnées livres (titre, auteur, langue, cover, chemin) |
 | `folders` | Dossiers thématiques |
 | `reading_progress` | Position de lecture par livre (chapitre, phrase, offset) |
-| `bookmarks` | Marque-pages nommés |
-| `notes` | Annotations utilisateur (passage surligné, contenu, position, horodatage) |
+| `bookmarks` | Marque-pages (chapter_order, sentence_index, label) |
+| `notes` | Annotations (highlighted_text, content, **type**: 'note'|'highlight', position) |
+
+> **Migration automatique** : les colonnes `folder_id` (books) et `type` (notes) sont ajoutées
+> au démarrage si elles n'existent pas — aucune action manuelle requise.
 
 ---
 
-## Fonctionnalités
+## Fonctionnalités implémentées
 
 ### Lecture
 - Ouverture de livres **EPUB, PDF, TXT, FB2** (MOBI/AZW3 non supporté)
@@ -158,34 +161,66 @@ ui/                          # Frontend React
 - Démarrage de lecture au clic sur une phrase
 - Navigation par chapitres (TOC)
 - Mémorisation automatique de la position de lecture
-- Contrôles : play/pause/stop, vitesse, volume, chapitre suivant/précédent
+- Contrôles : play/pause/stop, vitesse (0.25×→4×), volume, chapitre suivant/précédent
 - Export MP3 par chapitre via FFmpeg (SSE)
 
 ### Bibliothèque
-- Dossiers thématiques (SQLite)
-- Upload via l'interface (bouton "+ Ouvrir EPUB · TXT · PDF")
+- Dossiers thématiques (SQLite, glisser-déposer)
+- Upload via l'interface (EPUB · TXT · PDF · FB2)
 
-### Annotations
-- Sélection de texte → bouton flottant "📝 Ajouter une note"
-- Dialog avec passage surligné + champ de saisie libre (Ctrl+Entrée pour sauver)
-- Panneau latéral Notes : liste, navigation vers le passage, édition inline, suppression
-- Persistance en base SQLite (table `notes`), cascade suppression avec le livre
-- API REST : `GET/POST /api/notes/{book_id}`, `PUT/DELETE /api/notes/{id}`
+### Annotations (v2.1.0)
+- **Surlignage** : sélectionner du texte → `🖊 Surligner` → sauvegardé sans commentaire
+- **Note annotée** : sélectionner du texte → `📝 Note` → dialog avec saisie libre
+- **Marque-page** : bouton `🔖 Marque-page` en en-tête → posé à la position courante
+- Panneau Annotations unifié avec 3 types visuellement distincts :
+  - 📝 Note : bordure jaune, texte surligné + commentaire éditable
+  - 🖊 Surlignage : bordure orange, texte uniquement
+  - 🔖 Marque-page : bordure bleue, libellé + navigation
+- **Export annotations** : bouton `↓ Exporter` → fichier `.txt` (titre, chapitres, phrases)
+- Navigation vers le passage depuis le panneau (↗)
+- Persistance SQLite, cascade suppression avec le livre
+- API REST : `/api/notes`, `/api/bookmarks`
 
 ### Autres
-- Dictionnaire de prononciation personnalisable
+- Dictionnaire de prononciation personnalisable (JSON)
 - Paramètres TTS depuis l'interface
+
+---
+
+## API REST
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| GET | `/api/library` | Liste livres + dossiers |
+| POST | `/api/library/books/upload` | Upload EPUB/PDF/TXT/FB2 |
+| DELETE | `/api/library/books/{id}` | Supprimer un livre |
+| POST/GET/DELETE | `/api/library/folders` | CRUD dossiers |
+| POST | `/api/reader/open/{id}` | Ouvrir un livre |
+| GET | `/api/reader/chapter/{order}` | Contenu d'un chapitre (phrases) |
+| POST | `/api/player/play` | Lecture |
+| POST | `/api/player/pause` | Pause |
+| POST | `/api/player/sentence/{idx}` | Aller à une phrase |
+| GET/PUT | `/api/settings` | Paramètres TTS |
+| GET/POST/PUT/DELETE | `/api/notes/{book_id}` | CRUD notes/surlignages |
+| GET/POST/DELETE | `/api/bookmarks/{book_id}` | CRUD marque-pages |
+| POST | `/api/export/chapter/{order}` | Export MP3 (SSE) |
+| WS | `/ws` | Surlignage temps réel |
 
 ---
 
 ## Démarrage en développement
 
 ```bash
-# Terminal 1 — backend (depuis la racine du dépôt)
-PYTHONPATH=src python3 -m librelector.api.server
+# Prérequis : créer le virtualenv
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+pip install python-multipart PyMuPDF
+
+# Terminal 1 — backend
+python -m librelector.api.server
 
 # Terminal 2 — frontend (proxy Vite → port 7531)
-cd ui && npm run dev
+cd ui && npm install && npm run dev
 # → http://localhost:5173
 ```
 
@@ -196,7 +231,7 @@ cd ui && npm run dev
 | Format | Parser | Chapitres | Dépendance |
 |--------|--------|-----------|------------|
 | EPUB | `epub_doc.py` | Spine OPF | ebooklib |
-| PDF | `pdf_doc.py` | TOC ou groupes de 10 pages | PyMuPDF (`pip install PyMuPDF`) |
+| PDF | `pdf_doc.py` | TOC ou groupes de 10 pages | PyMuPDF |
 | TXT | `txt_doc.py` | Double-newline, fusion auto | stdlib |
 | FB2 | `fb2_doc.py` | `<section>` XML | stdlib |
 | MOBI/AZW3 | — | non supporté | — |
@@ -212,8 +247,20 @@ cd ui && npm run dev
 4. Construit `librelector_<VERSION>_amd64.deb`
 
 `packaging/debian/DEBIAN/postinst` :
-- Installe les dépendances Python via pip3
-- Lit la version via `dpkg-query` et l'affiche dynamiquement dans la bannière
+- Installe les dépendances Python via pip3 (dont python-multipart, PyMuPDF)
+- Affiche une bannière d'installation avec la version dynamique
+
+Entrée menu : `packaging/debian/usr/share/applications/librelector.desktop`
+Icône : `packaging/debian/usr/share/icons/hicolor/256x256/apps/librelector.png`
+
+---
+
+## Bugs connus / limitations
+
+- Les fichiers MOBI/AZW3 (Kindle) ne sont pas supportés
+- Speech Dispatcher produit une voix robot — Piper est fortement recommandé
+- La migration DB est automatique mais nécessite un redémarrage si la DB était ouverte
+- L'export MP3 nécessite FFmpeg installé sur le système
 
 ---
 
@@ -223,5 +270,17 @@ cd ui && npm run dev
 - Commits en français, conventionnel : `feat:`, `fix:`, `perf:`, `docs:`, `chore:`
 - Pas de commentaires triviaux — uniquement les invariants non-évidents
 - Le catch-all SPA dans `app.py` ne doit **pas** intercepter les routes `/api/*`
-- Tous les parsers de documents retournent un `EpubBook` (structure commune) pour que
-  le Player, le TTS et l'export fonctionnent sans modification
+- Tous les parsers de documents retournent un `EpubBook` (structure commune)
+
+---
+
+## Derniers travaux (session 2026-04-19)
+
+**Fonctionnalités ajoutées — v2.1.0** :
+- Surlignage persistant de phrases (type `highlight` dans la table `notes`)
+- Marque-pages avec API `/api/bookmarks` complète
+- Panneau Annotations unifié (3 types visuellement distincts)
+- Export des annotations en fichier `.txt`
+- Migration automatique de la colonne `type` dans `notes`
+- Icône SVG de l'application + entrée `.desktop`
+- Packaging Debian mis à jour (v2.1.0, nouvelles dépendances)

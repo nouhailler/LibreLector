@@ -1,5 +1,5 @@
 Package: librelector
-Version: 2.0.1
+Version: 2.1.0
 Architecture: amd64
 Maintainer: LibreLector Contributors <contact@librelector.org>
 Depends: python3 (>= 3.11), python3-pip, alsa-utils, ffmpeg, xdg-utils
@@ -7,17 +7,19 @@ Recommends: piper-tts
 Section: utils
 Priority: optional
 Homepage: https://github.com/nouhailler/LibreLector
-Description: Lecteur EPUB audio-first avec interface React et TTS neuronal
- LibreLector est un lecteur de livres numériques EPUB conçu pour l'écoute.
- L'interface React moderne tourne dans votre navigateur, pilotée par un
- backend Python FastAPI local.
+Description: Lecteur audio-first EPUB·PDF·TXT·FB2 avec TTS neuronal offline
+ LibreLector est un lecteur de livres numeriques concu pour l'ecoute.
+ L'interface React moderne tourne dans votre navigateur, pilotee par un
+ backend Python FastAPI local. Aucune donnee ne quitte votre machine.
  .
- Fonctionnalités :
+ Fonctionnalites v2.1.0 :
+  - Formats : EPUB, PDF, TXT, FB2 (detection automatique)
   - Voix naturelles hors-ligne via Piper TTS (moteur neuronal ONNX)
-  - Surlignage synchronisé phrase par phrase en temps réel (WebSocket)
-  - Interface React avec bibliothèque, dossiers thématiques et TOC
+  - Surlignage synchronise phrase par phrase en temps reel (WebSocket)
+  - Annotations : surlignage persistant, notes annotees, marque-pages
+  - Export des annotations en fichier texte
   - Navigation par clic sur n'importe quelle phrase
-  - Mémorisation automatique de la position de lecture (SQLite)
+  - Memorisation automatique de la position de lecture (SQLite)
+  - Bibliotheque avec dossiers thematiques
   - Export MP3 par chapitre via FFmpeg
   - Dictionnaire de prononciation personnalisable
-  - Paramètres TTS depuis l'interface

@@ -30,7 +30,8 @@ class NoteCreate(BaseModel):
     char_start: int = 0
     char_end: int = 0
     highlighted_text: str = ""
-    content: str
+    content: str = ""
+    type: str = "note"   # 'note' | 'highlight'
 
 
 class NoteUpdate(BaseModel):
@@ -67,6 +68,7 @@ async def create_note(body: NoteCreate):
         content=body.content,
         created_at=now,
         updated_at=now,
+        type=body.type,
     )
     note = sess.library.add_note(note)
     return dataclasses.asdict(note)

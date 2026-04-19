@@ -57,6 +57,16 @@ export interface Note {
   char_end: number
   highlighted_text: string
   content: string
+  type: 'note' | 'highlight'
   created_at: string
   updated_at: string
+}
+
+export interface Bookmark {
+  id: number
+  book_id: number
+  chapter_order: number
+  sentence_index: number
+  label: string
+  created_at: string
 }

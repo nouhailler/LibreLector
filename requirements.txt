@@ -1,22 +1,36 @@
-# EPUB parsing
+# ─────────────────────────────────────────────────────────────
+# LibreLector — dépendances Python
+# Généré le 2026-04-19
+# ─────────────────────────────────────────────────────────────
+
+# ── Serveur API ───────────────────────────────────────────────
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9    # upload fichiers (UploadFile / Form)
+pydantic>=2.6.0
+
+# ── Parsing EPUB ──────────────────────────────────────────────
 ebooklib>=0.18
 beautifulsoup4>=4.12
 lxml>=4.9
 
-# Text processing
-nltk>=3.8
+# ── Traitement du texte ───────────────────────────────────────
+nltk>=3.8                  # tokenisation phrases (punkt_tab)
 
-# Audio
+# ── Audio / export MP3 ────────────────────────────────────────
 pydub>=0.25
+# ffmpeg  → paquet système : sudo apt install ffmpeg
 
-# Multi-format support (Objectif 2)
-PyMuPDF>=1.23        # PDF parsing (fitz)
-# FB2 and TXT use stdlib only (xml.etree, pathlib)
+# ── Formats supplémentaires ───────────────────────────────────
+PyMuPDF>=1.23              # lecture PDF (fitz)
+# TXT et FB2 → stdlib Python uniquement
 
-# GTK bindings (installed via system packages on Linux)
-# PyGObject>=3.44  →  sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-adw-1
-
-# Dev/test
+# ── Dev / qualité ─────────────────────────────────────────────
 pytest>=7.4
 black>=23.0
 ruff>=0.1
+
+# ── Dépendances système (non-pip) ─────────────────────────────
+# PyGObject    → sudo apt install python3-gi
+# Speech Disp. → sudo apt install python3-speechd
+# Piper TTS    → pip install piper-tts  (optionnel, voix neuronale)

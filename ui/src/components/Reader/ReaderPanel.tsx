@@ -9,7 +9,17 @@ import { NotesPanel } from '../Notes/NotesPanel'
 export function ReaderPanel() {
   const currentBook = useStore(s => s.currentBook)
   const isLoadingBook = useStore(s => s.isLoadingBook)
+  const addBookmark = useStore(s => s.addBookmark)
+  const setNotesOpen = useStore(s => s.setNotesOpen)
   const [exportOpen, setExportOpen] = useState(false)
+  const [bookmarkSaved, setBookmarkSaved] = useState(false)
+
+  async function handleAddBookmark() {
+    await addBookmark()
+    setNotesOpen(true)
+    setBookmarkSaved(true)
+    setTimeout(() => setBookmarkSaved(false), 1500)
+  }
 
   if (isLoadingBook) {
     return (
@@ -30,7 +40,7 @@ export function ReaderPanel() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 min-h-0">
-      {/* Book title + export button */}
+      {/* Book title + actions */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-700 bg-slate-800 shrink-0">
         <div className="flex-1 min-w-0">
           <h1 className="text-base font-semibold truncate">{currentBook.title}</h1>
@@ -38,6 +48,17 @@ export function ReaderPanel() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <NotesPanel />
+          <button
+            onClick={handleAddBookmark}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              bookmarkSaved
+                ? 'bg-blue-500 text-white font-semibold'
+                : 'text-slate-400 hover:text-slate-200 bg-slate-700 hover:bg-slate-600'
+            }`}
+            title="Poser un marque-page ici"
+          >
+            {bookmarkSaved ? '🔖 Posé !' : '🔖 Marque-page'}
+          </button>
           <button
             onClick={() => setExportOpen(true)}
             className="px-2 py-1 text-xs text-slate-400 hover:text-slate-200 bg-slate-700 hover:bg-slate-600 rounded transition-colors"

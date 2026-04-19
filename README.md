@@ -1,103 +1,146 @@
-# LibreLector
+<div align="center">
 
-> Lecteur de livres numériques open-source, audio-first, pour Linux
+# 📖🔊 LibreLector
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-green.svg)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688.svg)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/UI-React%2018-61dafb.svg)](https://react.dev)
-[![Piper TTS](https://img.shields.io/badge/TTS-Piper-purple.svg)](https://github.com/rhasspy/piper)
+### Lecteur de livres numériques audio-first pour Linux
+
+*Écoutez vos livres avec une voix neuronale naturelle, surlignez, annotez, marquez — le tout hors-ligne.*
+
+[![License: GPL v3](https://img.shields.io/badge/Licence-GPLv3-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/API-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/UI-React%2018-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://typescriptlang.org)
+[![Piper TTS](https://img.shields.io/badge/TTS-Piper%20Neural-8B5CF6)](https://github.com/rhasspy/piper)
 [![Last commit](https://img.shields.io/github/last-commit/nouhailler/LibreLector)](https://github.com/nouhailler/LibreLector/commits/main)
-[![GitHub release](https://img.shields.io/github/v/release/nouhailler/LibreLector)](https://github.com/nouhailler/LibreLector/releases/latest)
-
-LibreLector est un lecteur de livres numériques conçu **prioritairement pour l'écoute**.
-Contrairement aux lecteurs visuels classiques (Foliate, Calibre…), l'audio est au cœur de l'expérience :
-voix naturelles hors-ligne via **Piper TTS**, surlignage synchronisé phrase par phrase,
-prise en charge de multiples formats et export MP3.
-
-L'interface React s'ouvre dans votre navigateur ; un backend FastAPI tourne en local — aucune donnée ne quitte votre machine.
+[![Release](https://img.shields.io/github/v/release/nouhailler/LibreLector?label=derni%C3%A8re%20release)](https://github.com/nouhailler/LibreLector/releases/latest)
 
 ---
 
-## Fonctionnalités
+**[📦 Télécharger le .deb](https://github.com/nouhailler/LibreLector/releases/latest)** · **[📋 Fonctionnalités](#-fonctionnalités)** · **[⚡ Installation rapide](#-installation)** · **[🏗️ Architecture](#️-architecture)**
+
+</div>
+
+---
+
+## ✨ Qu'est-ce que LibreLector ?
+
+LibreLector transforme vos livres numériques en expérience d'écoute immersive. Contrairement aux lecteurs visuels classiques (Foliate, Calibre…), **l'audio est au cœur de l'expérience** :
+
+- 🧠 **Voix neuronale offline** via [Piper TTS](https://github.com/rhasspy/piper) — qualité naturelle, aucune connexion requise
+- 📍 **Surlignage synchronisé** phrase par phrase en temps réel (WebSocket)
+- 📚 **Multi-formats** : EPUB, PDF, TXT, FB2
+- 🔒 **100 % local** — aucune donnée ne quitte votre machine
+
+L'interface React s'ouvre dans votre navigateur ; un backend FastAPI tourne silencieusement en local.
+
+---
+
+## 🚀 Fonctionnalités
+
+<details open>
+<summary><strong>🎵 Lecture audio</strong></summary>
 
 | Fonctionnalité | État |
-|---|---|
-| Lecture de fichiers **EPUB, PDF, TXT, FB2** | ✅ |
-| Détection automatique du format (extension + magic bytes) | ✅ |
+|---|:---:|
 | Voix neuronale offline via **Piper TTS** | ✅ |
-| Voix système via Speech Dispatcher (fallback automatique) | ✅ |
+| Fallback automatique vers Speech Dispatcher | ✅ |
 | Surlignage synchronisé phrase par phrase (WebSocket) | ✅ |
-| Démarrage de la lecture au clic sur n'importe quelle phrase | ✅ |
+| Clic sur une phrase pour démarrer la lecture à cet endroit | ✅ |
 | Lecture / Pause / Arrêt | ✅ |
+| Vitesse réglable (0.25× → 4×) | ✅ |
+| Volume réglable | ✅ |
 | Navigation par chapitres (table des matières) | ✅ |
-| Mémorisation automatique de la position de lecture | ✅ |
-| Bibliothèque avec dossiers thématiques | ✅ |
-| Annotations (notes sur passage surligné + navigation) | ✅ |
-| Dictionnaire de prononciation personnalisé | ✅ |
-| Réglage de la vitesse (0.25× à 4×) et du volume | ✅ |
 | Lecture continue multi-chapitres | ✅ |
-| Export MP3 par chapitre via FFmpeg | ✅ |
+| Mémorisation automatique de la position | ✅ |
+| Export MP3 par chapitre (FFmpeg) | ✅ |
+
+</details>
+
+<details open>
+<summary><strong>📝 Annotations</strong></summary>
+
+| Fonctionnalité | État |
+|---|:---:|
+| **🖊 Surligner** un passage (sauvegardé, bordure orange) | ✅ |
+| **📝 Annoter** un passage (texte surligné + commentaire libre) | ✅ |
+| **🔖 Marque-page** à la position de lecture courante | ✅ |
+| Panneau Annotations unifié (3 types distincts) | ✅ |
+| Navigation vers le passage depuis le panneau (↗) | ✅ |
+| Édition inline des notes | ✅ |
+| **↓ Export** de toutes les annotations en fichier `.txt` | ✅ |
+| Persistance SQLite (survit aux redémarrages) | ✅ |
+
+</details>
+
+<details>
+<summary><strong>📚 Bibliothèque & formats</strong></summary>
+
+| Fonctionnalité | État |
+|---|:---:|
+| Format **EPUB** | ✅ |
+| Format **PDF** (PyMuPDF) | ✅ |
+| Format **TXT** | ✅ |
+| Format **FB2** (FictionBook) | ✅ |
+| Détection automatique du format | ✅ |
+| Dossiers thématiques | ✅ |
+| Upload depuis l'interface | ✅ |
+| Dictionnaire de prononciation personnalisable | ✅ |
+
+</details>
 
 ---
 
-## Prérequis système
+## ⚡ Installation
 
-| Dépendance | Version | Rôle |
-|---|---|---|
-| Python | 3.11+ | Backend FastAPI |
-| pip3 | — | Installation des dépendances Python |
-| alsa-utils | — | Sortie audio |
-| xdg-utils | — | Ouverture du navigateur |
-| ffmpeg | — | **Optionnel** — export MP3 |
-| piper-tts + pathvalidate | — | **Optionnel** — voix neuronale naturelle |
-| PyMuPDF | ≥ 1.23 | **Optionnel** — lecture de fichiers PDF |
-
-> Le paquet `.deb` installe automatiquement `python3`, `python3-pip`, `alsa-utils`, `ffmpeg` et `xdg-utils` via `apt`.
-
----
-
-## Installation
-
-### Via le paquet .deb (recommandé)
+### 📦 Via le paquet .deb (recommandé)
 
 ```bash
-wget https://github.com/nouhailler/LibreLector/releases/latest/download/librelector_2.0.1_amd64.deb
-sudo dpkg -i librelector_2.0.1_amd64.deb
-sudo apt install -f   # résout les éventuelles dépendances manquantes
+# Télécharger la dernière release
+wget https://github.com/nouhailler/LibreLector/releases/latest/download/librelector_2.1.0_amd64.deb
+
+# Installer
+sudo dpkg -i librelector_2.1.0_amd64.deb
+sudo apt install -f          # résout les dépendances manquantes si besoin
+
+# Lancer
 librelector
 ```
 
-L'interface s'ouvre dans votre navigateur à `http://localhost:7531`.
+> L'interface s'ouvre dans votre navigateur à `http://localhost:7531`.
+> LibreLector apparaît aussi dans le menu des applications.
 
-### Depuis les sources
+---
+
+### 🔧 Depuis les sources (développement)
 
 ```bash
 git clone https://github.com/nouhailler/LibreLector.git
 cd LibreLector
-pip3 install -r requirements.txt
 
-# Lancer le backend
-PYTHONPATH=src python3 -m librelector.api.server
+# Créer l'environnement Python
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 
-# Dans un second terminal — frontend (développement, avec hot-reload)
-cd ui
-npm install
-npm run dev   # → http://localhost:5173
+# Terminal 1 — backend (port 7531)
+python -m librelector.api.server
+
+# Terminal 2 — frontend avec hot-reload (port 5173)
+cd ui && npm install && npm run dev
 ```
 
-En développement, Vite (port 5173) proxie automatiquement `/api` et `/ws` vers le backend (port 7531).
+Vite proxie automatiquement `/api` et `/ws` vers le backend.
 
 ---
 
-## Configuration de la voix Piper
+## 🧠 Configurer la voix Piper (recommandé)
 
-Piper produit une voix naturelle, entièrement hors-ligne. Il nécessite un modèle `.onnx` par langue.
+> Sans Piper, Speech Dispatcher (voix robot système) prend le relais automatiquement.
 
 ### 1. Installer Piper
 
 ```bash
-pip3 install piper-tts pathvalidate --break-system-packages
+pip install piper-tts
 ```
 
 ### 2. Télécharger un modèle de voix
@@ -106,159 +149,157 @@ pip3 install piper-tts pathvalidate --break-system-packages
 mkdir -p ~/.local/share/LibreLector/voices
 cd ~/.local/share/LibreLector/voices
 
-# Exemple : voix française féminine (siwis-medium)
+# Voix française féminine naturelle (siwis-medium)
 wget https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx
 wget https://huggingface.co/rhasspy/piper-voices/resolve/main/fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx.json
 ```
 
-D'autres voix sont disponibles sur [huggingface.co/rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices) — choisir le dossier `fr/fr_FR/` pour le français.
+> D'autres voix sur [huggingface.co/rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices)
 
 ### 3. Configurer dans l'interface
 
-**☰ → Paramètres** → sélectionner `piper` et renseigner le chemin complet vers le fichier `.onnx`.
-
-Ou directement dans `~/.local/share/LibreLector/settings.json` :
-
-```json
-{
-  "tts_engine": "piper",
-  "piper_model": "/home/VOTRE_USER/.local/share/LibreLector/voices/fr_FR-siwis-medium.onnx",
-  "language": "fr"
-}
-```
-
-> Si Piper n'est pas configuré, Speech Dispatcher (voix robot système) prend le relais automatiquement.
+**⚙ Paramètres** → sélectionner `piper` → renseigner le chemin vers le `.onnx` → **Enregistrer**
 
 ---
 
-## Utilisation
-
-### Interface
+## 🖥️ Interface
 
 ```
-┌──────────────────────┬──────────────────────────────────────────────────────┐
-│  Bibliothèque    📁+ +│  Titre du livre — Auteur                        ☰   │
-│                      │                                                      │
-│  ▼ Histoire          │  Chapitre 1 ──── Le texte du chapitre s'affiche     │
-│    📕 Livre A        │  Chapitre 2      ici. La phrase en cours de          │
-│    📗 Livre B   ···  │  Chapitre 3 ◀── lecture est ████████████████        │
-│  ▶ Roman             │  Chapitre 4      surlignée en jaune.                │
-│  ▼ Sans dossier      │                                                      │
-│    📘 Livre C   ···  │  📝 Notes                                            │
-│                      │                                                      │
-│                      │  ⏮   ▶   ⏹   ⏭    Vitesse 1.00  🔊───●            │
-└──────────────────────┴──────────────────────────────────────────────────────┘
+┌─────────────────────┬────────────────────────────────────────────────────────┐
+│  📚 Bibliothèque  + │  Le Petit Prince — Antoine de Saint-Exupéry     🔖 📝 │
+│                     │                                                        │
+│  ▼ Romans           │  ▸ Chapitre 1  Il était une fois un petit prince       │
+│    📕 Livre A       │  ▸ Chapitre 2  qui habitait une planète à peine        │
+│    📗 Livre B  ···  │  ▸ Chapitre 3  plus grande que lui, et qui avait       │
+│  ▼ Essais           │             ██ besoin d'un ami. ██                     │
+│    📘 Livre C  ···  │                                                        │
+│                     │  📝 Annotations (3)                    ↓ Exporter     │
+│  ─────────────────  │  ─────────────────────────────────────────────────     │
+│                     │  🖊  « besoin d'un ami »    Ch.3 · Phrase 7           │
+│                     │  📝  « petit prince »       — Personnage central       │
+│                     │  🔖  Marque-page            Ch.2 · Phrase 1           │
+│                     │                                                        │
+│                     │  ⏮   ▶   ⏹   ⏭    1.0×   🔊──────●                  │
+└─────────────────────┴────────────────────────────────────────────────────────┘
 ```
 
-### Fonctions principales
+---
 
-| Action | Comment |
-|---|---|
-| Ajouter un livre | Bouton **+** (sidebar) — EPUB, PDF, TXT ou FB2 |
-| Ouvrir un livre | Clic sur le titre dans la sidebar |
-| Démarrer la lecture à une phrase précise | Clic sur la phrase dans le texte |
-| Naviguer entre chapitres | Table des matières à gauche, ou boutons ⏮ / ⏭ |
-| Créer une annotation | Sélectionner du texte → bouton **📝 Ajouter une note** |
-| Afficher les notes | Bouton **📝 Notes** (coin supérieur droit de la zone de lecture) |
-| Exporter en MP3 | **☰ → Exporter en MP3…** (nécessite FFmpeg + Piper) |
-| Personnaliser la prononciation | Éditer `~/.local/share/LibreLector/pronunciation.json` |
-
-### Dictionnaire de prononciation
-
-Les sigles et noms propres mal prononcés peuvent être corrigés dans :
+## 🏗️ Architecture
 
 ```
-~/.local/share/LibreLector/pronunciation.json
+┌──────────────────────────────────────────────┐
+│  🌐 Frontend React 18 + TypeScript            │
+│     Vite · Tailwind CSS · Zustand             │
+│     Servi statiquement par FastAPI             │
+└─────────────────────┬────────────────────────┘
+                      │  HTTP REST + WebSocket
+                      │  localhost:7531
+┌─────────────────────▼────────────────────────┐
+│  ⚡ Backend FastAPI (Python 3.11+)            │
+│                                               │
+│  /api/library   — bibliothèque & upload       │
+│  /api/reader    — ouverture, chapitres        │
+│  /api/player    — contrôles TTS               │
+│  /api/notes     — annotations & surlignages   │
+│  /api/bookmarks — marque-pages                │
+│  /api/export    — MP3 (SSE)                   │
+│  /ws            — surlignage temps réel       │
+│                                               │
+│  document/  → parseurs EPUB·PDF·TXT·FB2       │
+│  tts/       → Piper (neural) + fallback       │
+│  core/      → Player + export MP3             │
+│  data/      → SQLite WAL                      │
+└───────────────────────────────────────────────┘
 ```
 
-```json
-{
-  "LLM": "L L M",
-  "Kubernetes": "koubernetesse",
-  "GPU": "gépéu"
-}
-```
+> Tous les parseurs retournent une structure `EpubBook` commune — le moteur TTS et l'export fonctionnent indépendamment du format source.
 
-### Données utilisateur
+---
+
+## 🗄️ Données utilisateur
 
 ```
 ~/.local/share/LibreLector/
-├── metadata.db          # Bibliothèque SQLite (livres, dossiers, progression, notes)
-├── settings.json        # Préférences TTS
-├── pronunciation.json   # Prononciations personnalisées
-└── voices/              # Modèles Piper (.onnx + .onnx.json)
+├── metadata.db          # 📊 Bibliothèque SQLite
+├── settings.json        # ⚙️  Préférences TTS
+├── pronunciation.json   # 🗣️  Prononciations personnalisées
+└── voices/              # 🧠 Modèles Piper (.onnx)
+```
+
+### Dictionnaire de prononciation
+
+```json
+// ~/.local/share/LibreLector/pronunciation.json
+{
+  "LLM":        "L L M",
+  "Kubernetes": "koubernetesse",
+  "GPU":        "gépéu"
+}
 ```
 
 ---
 
-## Architecture
+## 📦 Dépendances
 
-LibreLector est une application web locale. Le backend FastAPI (port **7531**) sert le frontend React compilé et expose une API REST + WebSocket.
-
-```
-┌──────────────────────────────────────────┐
-│  Frontend React 18 + TypeScript          │
-│  (Vite, Tailwind CSS, Zustand)           │
-│  Servi statiquement par FastAPI           │
-└───────────────────┬──────────────────────┘
-                    │ HTTP REST + WebSocket
-┌───────────────────▼──────────────────────┐
-│  Backend FastAPI (Python 3.11)           │
-│                                          │
-│  api/routers/                            │
-│    library  · notes  · player            │
-│    reader   · settings · export          │
-│                                          │
-│  document/  → parseurs EPUB/PDF/TXT/FB2  │
-│  tts/       → Piper (neural) + fallback  │
-│  core/      → Player + exporter MP3      │
-│  data/      → SQLite WAL                 │
-└──────────────────────────────────────────┘
-```
-
-Tous les parseurs de documents retournent une structure `EpubBook` commune, ce qui permet au moteur TTS et à l'export d'être indépendants du format source.
+| Dépendance | Version | Rôle |
+|---|---|---|
+| Python | ≥ 3.11 | Runtime backend |
+| FastAPI + uvicorn | ≥ 0.110 | Serveur API |
+| ebooklib + bs4 + lxml | ≥ latest | Parsing EPUB |
+| PyMuPDF | ≥ 1.23 | Parsing PDF |
+| NLTK | ≥ 3.8 | Tokenisation phrases |
+| pydub | ≥ 0.25 | Export audio |
+| ffmpeg | système | Encodage MP3 |
+| piper-tts | ≥ latest | Voix neuronale (optionnel) |
+| Node.js + npm | ≥ 18 | Build frontend (dev) |
 
 ---
 
-## Feuille de route
+## 🗺️ Feuille de route
 
-- **v1.0** — Interface React + API FastAPI, bibliothèque, TTS Piper ✅
-- **v2.0** — Correction chargement EPUB et panneau paramètres ✅
-- **v2.1** — Parseurs multi-format (PDF/TXT/FB2) + annotations ✅
-- **v2.2** — Mode podcast, navigation intelligente
-- **v3.0** — Packaging Flatpak / AppImage
-
----
-
-## Contribuer
-
-Les contributions sont les bienvenues, qu'il s'agisse de corrections de bugs, d'ajout de fonctionnalités ou d'améliorations de la documentation.
-
-1. **Signaler un bug** : ouvrir une [issue](https://github.com/nouhailler/LibreLector/issues) en décrivant le comportement observé et les étapes pour le reproduire
-2. **Proposer une modification** : forker le dépôt, créer une branche, soumettre une [pull request](https://github.com/nouhailler/LibreLector/pulls)
-3. **Ajouter un format de document** : implémenter un `DocumentParser` dans `src/librelector/document/` et l'enregistrer dans `factory.py`
-
-Les commits suivent la convention : `feat:`, `fix:`, `perf:`, `docs:`, `chore:` (en français).
+- [x] **v1.0** — Interface React + API FastAPI, bibliothèque, TTS Piper
+- [x] **v2.0** — Panneau paramètres, correction chargement EPUB
+- [x] **v2.1** — Annotations complètes : surlignage, marque-pages, export `.txt`
+- [ ] **v2.2** — Mode podcast, navigation intelligente, raccourcis clavier
+- [ ] **v3.0** — Packaging Flatpak / AppImage
 
 ---
 
-## Remerciements
+## 🤝 Contribuer
+
+Les contributions sont les bienvenues !
+
+1. **🐛 Signaler un bug** → [ouvrir une issue](https://github.com/nouhailler/LibreLector/issues)
+2. **✨ Proposer une fonctionnalité** → [discussion](https://github.com/nouhailler/LibreLector/discussions)
+3. **🔧 Soumettre un patch** → forker → branche → [pull request](https://github.com/nouhailler/LibreLector/pulls)
+4. **📄 Ajouter un format** → implémenter `DocumentParser` dans `src/librelector/document/`
+
+> Commits en français, convention : `feat:`, `fix:`, `perf:`, `docs:`, `chore:`
+
+---
+
+## 🙏 Remerciements
 
 LibreLector s'appuie sur des projets open-source remarquables :
 
-- [Piper TTS](https://github.com/rhasspy/piper) — synthèse vocale neuronale offline (Rhasspy)
-- [FastAPI](https://fastapi.tiangolo.com) — framework API Python
-- [React](https://react.dev) — interface utilisateur
-- [ebooklib](https://github.com/aerkalov/ebooklib) — parsing EPUB
-- [PyMuPDF](https://pymupdf.readthedocs.io) — parsing PDF
-- [NLTK](https://www.nltk.org) — tokenisation des phrases
-- [pydub](https://github.com/jiaaro/pydub) + [FFmpeg](https://ffmpeg.org) — export audio MP3
-- [Speech Dispatcher](https://freebsoft.org/speechd) — TTS système Linux (fallback)
+| Projet | Rôle |
+|---|---|
+| [Piper TTS](https://github.com/rhasspy/piper) | Voix neuronale offline |
+| [FastAPI](https://fastapi.tiangolo.com) | Framework API Python |
+| [React](https://react.dev) | Interface utilisateur |
+| [ebooklib](https://github.com/aerkalov/ebooklib) | Parsing EPUB |
+| [PyMuPDF](https://pymupdf.readthedocs.io) | Parsing PDF |
+| [NLTK](https://www.nltk.org) | Tokenisation |
+| [pydub](https://github.com/jiaaro/pydub) + [FFmpeg](https://ffmpeg.org) | Export MP3 |
+| [Speech Dispatcher](https://freebsoft.org/speechd) | TTS système (fallback) |
 
 ---
 
-## Licence
+<div align="center">
 
-GNU General Public License v3.0 — voir [LICENSE](LICENSE).
+**Licence GNU GPL v3.0** — [LICENSE](LICENSE)
 
-Projet maintenu par [nouhailler](https://github.com/nouhailler).
+Maintenu par [nouhailler](https://github.com/nouhailler)
+
+</div>

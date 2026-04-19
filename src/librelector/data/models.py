@@ -57,3 +57,4 @@ class Note:
     content: str
     created_at: str
     updated_at: str
+    type: str = "note"   # 'note' | 'highlight'

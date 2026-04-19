@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS notes (
     char_end         INTEGER NOT NULL DEFAULT 0,
     highlighted_text TEXT    NOT NULL DEFAULT '',
     content          TEXT    NOT NULL DEFAULT '',
+    type             TEXT    NOT NULL DEFAULT 'note',
     created_at       TEXT    NOT NULL,
     updated_at       TEXT    NOT NULL
 );
@@ -103,6 +104,14 @@ class Library:
             )
             self._conn.commit()
             logger.info("Migration : colonne folder_id ajoutée à books")
+
+        note_cols = {row[1] for row in self._conn.execute("PRAGMA table_info(notes)").fetchall()}
+        if "type" not in note_cols:
+            self._conn.execute(
+                "ALTER TABLE notes ADD COLUMN type TEXT NOT NULL DEFAULT 'note'"
+            )
+            self._conn.commit()
+            logger.info("Migration : colonne type ajoutée à notes")
 
     def close(self) -> None:
         self._conn.close()
@@ -267,12 +276,12 @@ class Library:
         cur = self._conn.execute(
             """INSERT INTO notes
                (book_id, chapter_order, sentence_index, char_start, char_end,
-                highlighted_text, content, created_at, updated_at)
-               VALUES (?,?,?,?,?,?,?,?,?) RETURNING id""",
+                highlighted_text, content, type, created_at, updated_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING id""",
             (
                 note.book_id, note.chapter_order, note.sentence_index,
                 note.char_start, note.char_end, note.highlighted_text,
-                note.content, note.created_at or now, note.updated_at or now,
+                note.content, note.type, note.created_at or now, note.updated_at or now,
             ),
         )
         note.id = cur.fetchone()["id"]
@@ -312,6 +321,7 @@ class Library:
             content=row["content"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
+            type=row["type"] if "type" in row.keys() else "note",
         )
 
     @staticmethod

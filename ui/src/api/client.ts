@@ -1,4 +1,4 @@
-import type { Folder, Book, ChapterMeta, ChapterContent, Progress, PlayerState, Settings, Note } from '../types'
+import type { Folder, Book, ChapterMeta, ChapterContent, Progress, PlayerState, Settings, Note, Bookmark } from '../types'
 
 // En dev Vite proxie /api → localhost:7531 ; en prod l'URL absolue est nécessaire
 const BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV) ? '' : 'http://localhost:7531'
@@ -57,10 +57,16 @@ export const api = {
   getNotes: (bookId: number) => request<{ notes: Note[] }>('GET', `/api/notes/${bookId}`),
   createNote: (data: {
     book_id: number; chapter_order: number; sentence_index: number
-    char_start: number; char_end: number; highlighted_text: string; content: string
+    char_start: number; char_end: number; highlighted_text: string; content: string; type: string
   }) => request<Note>('POST', '/api/notes', data),
   updateNote: (id: number, content: string) => request<void>('PUT', `/api/notes/${id}`, { content }),
   deleteNote: (id: number) => request<void>('DELETE', `/api/notes/${id}`),
+
+  // Bookmarks
+  getBookmarks: (bookId: number) => request<{ bookmarks: Bookmark[] }>('GET', `/api/bookmarks/${bookId}`),
+  createBookmark: (data: { book_id: number; chapter_order: number; sentence_index: number; label: string }) =>
+    request<Bookmark>('POST', '/api/bookmarks', data),
+  deleteBookmark: (id: number) => request<void>('DELETE', `/api/bookmarks/${id}`),
 
   // Health
   health: () => request<{ status: string }>('GET', '/api/health'),

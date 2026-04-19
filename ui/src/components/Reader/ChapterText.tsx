@@ -12,35 +12,37 @@ interface SelectionInfo {
 }
 
 export function ChapterText() {
-  const { currentChapterContent, currentChapterOrder, currentSentenceIndex, playerState, goToSentence, isLoadingChapter } = useStore(s => ({
+  const { currentChapterContent, currentChapterOrder, currentSentenceIndex, playerState, goToSentence, isLoadingChapter, addHighlight, setNotesOpen } = useStore(s => ({
     currentChapterContent: s.currentChapterContent,
     currentChapterOrder: s.currentChapterOrder,
     currentSentenceIndex: s.currentSentenceIndex,
     playerState: s.playerState,
     goToSentence: s.goToSentence,
     isLoadingChapter: s.isLoadingChapter,
+    addHighlight: s.addHighlight,
+    setNotesOpen: s.setNotesOpen,
   }))
 
   const activeRef = useRef<HTMLSpanElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
-  // Floating button state (disappears on click-elsewhere)
+  // Bouton flottant (disparaît au clic ailleurs)
   const [floatingBtn, setFloatingBtn] = useState<SelectionInfo | null>(null)
-  // Frozen copy used by the dialog (survives setFloatingBtn(null))
+  // Copie gelée utilisée par la dialog (survive à setFloatingBtn(null))
   const [pendingNote, setPendingNote] = useState<SelectionInfo | null>(null)
   const [noteDialogOpen, setNoteDialogOpen] = useState(false)
 
-  // Auto-scroll to active sentence
+  // Auto-scroll vers la phrase active
   useEffect(() => {
     if (activeRef.current) {
       activeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }, [currentSentenceIndex])
 
-  // Hide floating button when clicking anywhere except the button itself
+  // Masquer le bouton flottant au clic hors de lui
   useEffect(() => {
     const hide = (e: MouseEvent) => {
-      const btn = document.getElementById('note-float-btn')
+      const btn = document.getElementById('note-float-menu')
       if (btn && btn.contains(e.target as Node)) return
       setFloatingBtn(null)
     }
@@ -61,7 +63,7 @@ export function ChapterText() {
     const containerRect = containerRef.current?.getBoundingClientRect()
     if (!containerRect) return
 
-    // Find which sentence span was selected
+    // Trouver quelle phrase est sélectionnée
     let node: Node | null = range.startContainer
     while (node && node !== containerRef.current) {
       if (node instanceof HTMLElement && node.dataset.sentenceIndex !== undefined) {
@@ -82,7 +84,7 @@ export function ChapterText() {
       node = node.parentNode
     }
 
-    // Fallback: use first sentence
+    // Fallback : première phrase
     const first = currentChapterContent?.sentences[0]
     setFloatingBtn({
       text,
@@ -96,10 +98,24 @@ export function ChapterText() {
 
   function openNoteDialog() {
     if (!floatingBtn) return
-    // Freeze the selection data BEFORE clearing the button
     setPendingNote({ ...floatingBtn })
     setFloatingBtn(null)
     setNoteDialogOpen(true)
+  }
+
+  async function saveHighlight() {
+    if (!floatingBtn) return
+    const info = { ...floatingBtn }
+    setFloatingBtn(null)
+    window.getSelection()?.removeAllRanges()
+    await addHighlight({
+      chapter_order: currentChapterOrder,
+      sentence_index: info.sentenceIndex,
+      char_start: info.charStart,
+      char_end: info.charEnd,
+      highlighted_text: info.text,
+    })
+    setNotesOpen(true)
   }
 
   if (isLoadingChapter) {
@@ -131,19 +147,31 @@ export function ChapterText() {
         })}
       </div>
 
-      {/* Floating "Add note" button — id used by the mousedown guard above */}
+      {/* Menu flottant deux actions — id utilisé par le guard mousedown */}
       {floatingBtn && (
-        <button
-          id="note-float-btn"
-          onClick={openNoteDialog}
+        <div
+          id="note-float-menu"
           style={{ left: floatingBtn.x, top: floatingBtn.y }}
-          className="absolute -translate-x-1/2 -translate-y-full bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xs font-semibold px-3 py-1.5 rounded shadow-lg z-20 whitespace-nowrap transition-colors"
+          className="absolute -translate-x-1/2 -translate-y-full flex gap-1 z-20"
         >
-          📝 Ajouter une note
-        </button>
+          <button
+            onClick={saveHighlight}
+            className="bg-orange-500 hover:bg-orange-400 text-white text-xs font-semibold px-3 py-1.5 rounded-l shadow-lg whitespace-nowrap transition-colors"
+            title="Sauvegarder le surlignage sans note"
+          >
+            🖊 Surligner
+          </button>
+          <button
+            onClick={openNoteDialog}
+            className="bg-yellow-400 hover:bg-yellow-300 text-slate-900 text-xs font-semibold px-3 py-1.5 rounded-r shadow-lg whitespace-nowrap transition-colors"
+            title="Ajouter une note à ce passage"
+          >
+            📝 Note
+          </button>
+        </div>
       )}
 
-      {/* Note creation dialog — uses pendingNote, survives floatingBtn being null */}
+      {/* Dialog de création de note — utilise pendingNote, survive à floatingBtn=null */}
       {noteDialogOpen && pendingNote && (
         <NoteDialog
           highlightedText={pendingNote.text}

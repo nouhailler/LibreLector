@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { api } from '../api/client'
-import type { Book, Folder, ChapterMeta, ChapterContent, PlayerState, Settings, Note } from '../types'
+import type { Book, Folder, ChapterMeta, ChapterContent, PlayerState, Settings, Note, Bookmark } from '../types'
 
 interface LibreLectorState {
   // Library
@@ -21,6 +21,7 @@ interface LibreLectorState {
 
   // Notes
   notes: Note[]
+  bookmarks: Bookmark[]
   notesOpen: boolean
 
   // UI
@@ -58,9 +59,15 @@ interface LibreLectorState {
   // Notes actions
   loadNotes: (bookId: number) => Promise<void>
   addNote: (data: { chapter_order: number; sentence_index: number; char_start: number; char_end: number; highlighted_text: string; content: string }) => Promise<void>
+  addHighlight: (data: { chapter_order: number; sentence_index: number; char_start: number; char_end: number; highlighted_text: string }) => Promise<void>
   editNote: (id: number, content: string) => Promise<void>
   removeNote: (id: number) => Promise<void>
   setNotesOpen: (open: boolean) => void
+
+  // Bookmarks actions
+  loadBookmarks: (bookId: number) => Promise<void>
+  addBookmark: (label?: string) => Promise<void>
+  removeBookmark: (id: number) => Promise<void>
 
   // UI
   setSettingsOpen: (open: boolean) => void
@@ -83,6 +90,7 @@ export const useStore = create<LibreLectorState>((set, get) => ({
   speed: 1.0,
   volume: 1.0,
   notes: [],
+  bookmarks: [],
   notesOpen: false,
   settingsOpen: false,
   isLoadingLibrary: false,
@@ -144,9 +152,11 @@ export const useStore = create<LibreLectorState>((set, get) => ({
         playerState: 'idle',
         currentChapterContent: null,
         notes: [],
+        bookmarks: [],
       })
       await get().loadChapter(initialChapter)
       await get().loadNotes(bookId)
+      await get().loadBookmarks(bookId)
     } finally {
       set({ isLoadingBook: false })
     }
@@ -224,7 +234,14 @@ export const useStore = create<LibreLectorState>((set, get) => ({
   addNote: async (data) => {
     const book = get().currentBook
     if (!book) return
-    await api.createNote({ book_id: book.id, ...data })
+    await api.createNote({ book_id: book.id, type: 'note', ...data })
+    await get().loadNotes(book.id)
+  },
+
+  addHighlight: async (data) => {
+    const book = get().currentBook
+    if (!book) return
+    await api.createNote({ book_id: book.id, content: '', type: 'highlight', ...data })
     await get().loadNotes(book.id)
   },
 
@@ -239,6 +256,28 @@ export const useStore = create<LibreLectorState>((set, get) => ({
   },
 
   setNotesOpen: (open) => set({ notesOpen: open }),
+
+  loadBookmarks: async (bookId) => {
+    const data = await api.getBookmarks(bookId)
+    set({ bookmarks: data.bookmarks })
+  },
+
+  addBookmark: async (label = '') => {
+    const { currentBook, currentChapterOrder, currentSentenceIndex } = get()
+    if (!currentBook) return
+    await api.createBookmark({
+      book_id: currentBook.id,
+      chapter_order: currentChapterOrder,
+      sentence_index: currentSentenceIndex,
+      label,
+    })
+    await get().loadBookmarks(currentBook.id)
+  },
+
+  removeBookmark: async (id) => {
+    await api.deleteBookmark(id)
+    set(s => ({ bookmarks: s.bookmarks.filter(b => b.id !== id) }))
+  },
 
   setSettingsOpen: (open) => set({ settingsOpen: open }),
 
